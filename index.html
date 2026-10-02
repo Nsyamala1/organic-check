@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Organic Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one narrow column, two tabs (packaged food / fresh produce), results shown as a produce-sticker verdict plus three facts. */
+:root {
+  --bg: #eef2ec;
+  --surface: #ffffff;
+  --ink: #17261c;
+  --muted: #5a6b5f;
+  --line: #d4ddd2;
+  --leaf: #1f6b3a;
+  --sticker: #f6d44a;
+  --sticker-ink: #2b2406;
+  --warn: #a4471f;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101a13; --surface: #17241b; --ink: #e6eee7; --muted: #9db0a2; --line: #2a3b2f;
+    --leaf: #6fcf8d; --sticker: #f0cb3c; --sticker-ink: #2b2406; --warn: #e48a5c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101a13; --surface: #17241b; --ink: #e6eee7; --muted: #9db0a2; --line: #2a3b2f;
+  --leaf: #6fcf8d; --sticker: #f0cb3c; --sticker-ink: #2b2406; --warn: #e48a5c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-body); }
+.wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 20px; }
+h1 { font: 800 clamp(2rem, 8vw, 2.8rem)/1 var(--font-display); letter-spacing: -0.02em; margin: 0; }
+h2 { font: 600 1.15rem/1.2 var(--font-display); margin: 0; }
+.sub { color: var(--muted); margin: 6px 0 0; max-width: 46ch; }
+.tabs { display: flex; gap: 8px; }
+.tab { flex: 1; padding: 12px 8px; border: 1.5px solid var(--line); background: transparent; color: var(--ink); border-radius: 10px; font: 600 0.95rem var(--font-body); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+.panel { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+form { display: flex; gap: 8px; flex-wrap: wrap; }
+input[type="text"] { flex: 1 1 200px; min-width: 0; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: 500 1rem var(--font-mono); }
+button.go, button.alt { padding: 12px 18px; border-radius: 10px; font: 600 0.95rem var(--font-body); cursor: pointer; border: 1.5px solid var(--leaf); }
+button.go { background: var(--leaf); color: var(--bg); }
+button.alt { background: transparent; color: var(--leaf); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 0.85rem; }
+.chip { padding: 5px 10px; border: 1px dashed var(--line); border-radius: 999px; background: transparent; color: var(--ink); font: 500 0.8rem var(--font-mono); cursor: pointer; }
+#reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.prod { display: flex; gap: 14px; align-items: center; }
+.prod img { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid var(--line); }
+.prod .name { font: 600 1.1rem/1.25 var(--font-display); overflow-wrap: anywhere; }
+.prod .brand { color: var(--muted); font-size: 0.9rem; }
+.sticker { align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 0.95rem var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; transform: rotate(-1.5deg); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
+.sticker.no { background: transparent; color: var(--warn); border: 2px dashed var(--warn); box-shadow: none; }
+.sticker .plu { font-family: var(--font-mono); font-weight: 500; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.fact { border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+.fact .k { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.fact .v { font: 800 1.6rem/1.1 var(--font-display); margin-top: 4px; }
+.fact .d { font-size: 0.85rem; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+.ing { font-size: 0.88rem; color: var(--muted); overflow-wrap: anywhere; }
+.note { font-size: 0.85rem; color: var(--muted); }
+a { color: var(--leaf); }
+.results { display: flex; flex-direction: column; gap: 8px; }
+.results button { text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: 500 0.95rem var(--font-body); cursor: pointer; overflow-wrap: anywhere; }
+.lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.lists h3 { font: 600 1rem var(--font-display); margin: 0 0 8px; }
+.lists ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
+.pluguide { display: grid; gap: 8px; font-size: 0.92rem; }
+.pluguide div { display: flex; gap: 12px; align-items: baseline; }
+.pluguide code { font: 500 0.85rem var(--font-mono); background: var(--bg); padding: 2px 8px; border-radius: 6px; flex: none; }
+.err { color: var(--warn); }
+@media (prefers-reduced-motion: no-preference) { .sticker { transition: transform .2s; } .sticker:hover { transform: rotate(0deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Organic Check</h1>
+    <p class="sub">Scan or type a barcode to see if a packaged food carries an organic label, which additives it has, and how processed it is. Use the produce tab for stickers and pesticide lists.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-food" aria-selected="true" aria-controls="panel-food">Packaged food</button>
+    <button class="tab" role="tab" id="tab-produce" aria-selected="false" aria-controls="panel-produce">Fresh produce</button>
+  </div>
+
+  <section class="panel" id="panel-food" role="tabpanel" aria-labelledby="tab-food">
+    <form id="lookup-form">
+      <input type="text" id="q" inputmode="search" placeholder="Barcode or product name" autocomplete="off" aria-label="Barcode or product name">
+      <button class="go" type="submit">Check</button>
+      <button class="alt" type="button" id="scan">Scan</button>
+      <button class="alt" type="button" id="photo">Photo</button>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" hidden>
+    </form>
+    <div class="chips"><span>Try:</span>
+      <button class="chip" data-code="3017620422003">3017620422003</button>
+      <button class="chip" data-code="5449000000996">5449000000996</button>
+    </div>
+    <div id="reader" hidden></div>
+    <div id="reader-file" hidden></div>
+    <div id="out" aria-live="polite"></div>
+    <p class="note">Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To confirm a brand is certified, search it in the <a href="https://organic.ams.usda.gov/integrity/" target="_blank" rel="noopener">USDA Organic Integrity Database</a>.</p>
+  </section>
+
+  <section class="panel" id="panel-produce" role="tabpanel" aria-labelledby="tab-produce" hidden>
+    <form id="plu-form">
+      <input type="text" id="plu" inputmode="numeric" maxlength="5" placeholder="Number on the sticker" autocomplete="off" aria-label="PLU number on produce sticker">
+      <button class="go" type="submit">Read sticker</button>
+    </form>
+    <div id="plu-out" aria-live="polite"></div>
+    <div class="card">
+      <h2>Reading a produce sticker</h2>
+      <div class="pluguide">
+        <div><code>4011</code><span>Four digits: grown conventionally.</span></div>
+        <div><code>94011</code><span>Five digits starting with 9: organic.</span></div>
+        <div><code>84011</code><span>Five digits starting with 8: genetically engineered (rarely used).</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Where organic matters most</h2>
+      <p class="note" style="margin:0">EWG's 2025 lists, ranked by pesticide residue found in testing. Check ewg.org for the current year.</p>
+      <div class="lists">
+        <div><h3>Dirty Dozen: buy organic</h3><ul id="dirty"></ul></div>
+        <div><h3>Clean Fifteen: lower risk</h3><ul id="clean"></ul></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="html5-qrcode.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var API = "https://world.openfoodfacts.org";
+  var ORGANIC_TAGS = ["en:organic", "en:eu-organic", "en:usda-organic", "en:canada-organic", "fr:ab-agriculture-biologique"];
+  var NOVA = {
+    1: "Unprocessed or minimally processed",
+    2: "Processed culinary ingredient",
+    3: "Processed food",
+    4: "Ultra-processed food"
+  };
+  var DIRTY = ["Spinach", "Strawberries", "Kale, collard and mustard greens", "Grapes", "Peaches", "Cherries", "Nectarines", "Pears", "Apples", "Blackberries", "Blueberries", "Potatoes"];
+  var CLEAN = ["Pineapples", "Sweet corn", "Avocados", "Papayas", "Onions", "Sweet peas (frozen)", "Asparagus", "Cabbage", "Watermelon", "Cantaloupe", "Mushrooms", "Mangoes", "Sweet potatoes", "Carrots", "Kiwi"];
+  var PLU_NAMES = { "4011": "Bananas", "4046": "Hass avocado (small)", "4225": "Hass avocado (large)", "4065": "Green bell pepper", "4131": "Fuji apple", "4133": "Gala apple" };
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  DIRTY.forEach(function (t) { $("dirty").appendChild(el("li", "", t)); });
+  CLEAN.forEach(function (t) { $("clean").appendChild(el("li", "", t)); });
+
+  /* Tabs */
+  function selectTab(which) {
+    ["food", "produce"].forEach(function (k) {
+      $("tab-" + k).setAttribute("aria-selected", String(k === which));
+      $("panel-" + k).hidden = k !== which;
+    });
+  }
+  $("tab-food").addEventListener("click", function () { selectTab("food"); });
+  $("tab-produce").addEventListener("click", function () { selectTab("produce"); });
+
+  /* Packaged food */
+  function showMessage(text, isErr) {
+    var out = $("out");
+    out.textContent = "";
+    out.appendChild(el("p", isErr ? "err" : "note", text));
+  }
+
+  function fact(k, v, d) {
+    var f = el("div", "fact");
+    f.appendChild(el("div", "k", k));
+    f.appendChild(el("div", "v", v));
+    if (d) f.appendChild(el("div", "d", d));
+    return f;
+  }
+
+  function renderProduct(p) {
+    var tags = p.labels_tags || [];
+    var organic = tags.filter(function (t) { return ORGANIC_TAGS.indexOf(t) !== -1; });
+    var additives = (p.additives_tags || []).map(function (t) { return t.replace(/^en:/, "").toUpperCase(); });
+    var card = el("div", "card");
+
+    var head = el("div", "prod");
+    if (p.image_front_small_url) {
+      var img = el("img");
+      img.src = p.image_front_small_url;
+      img.alt = "";
+      head.appendChild(img);
+    }
+    var names = el("div");
+    names.appendChild(el("div", "name", p.product_name || "Unnamed product"));
+    if (p.brands) names.appendChild(el("div", "brand", p.brands));
+    head.appendChild(names);
+    card.appendChild(head);
+
+    var st = el("div", organic.length ? "sticker" : "sticker no", organic.length ? "Organic label found" : "No organic label listed");
+    card.appendChild(st);
+
+    var facts = el("div", "facts");
+    facts.appendChild(fact("Additives", String(additives.length), additives.length ? additives.join(", ") : "None listed"));
+    facts.appendChild(fact("Processing", p.nova_group ? "NOVA " + p.nova_group : "Unknown", p.nova_group ? NOVA[p.nova_group] : "Not enough data to rate"));
+    facts.appendChild(fact("Nutri-Score", p.nutriscore_grade ? p.nutriscore_grade.toUpperCase() : "n/a", "A is best, E is worst"));
+    card.appendChild(facts);
+
+    if (organic.length) {
+      card.appendChild(el("p", "note", "Labels recorded: " + organic.map(function (t) { return t.replace(/^[a-z]{2}:/, "").replace(/-/g, " "); }).join(", ") + "."));
+    }
+    if (p.ingredients_text) card.appendChild(el("p", "ing", "Ingredients: " + p.ingredients_text));
+
+    var out = $("out");
+    out.textContent = "";
+    out.appendChild(card);
+  }
+
+  function lookupCode(code) {
+    showMessage("Looking up " + code + "...");
+    var fields = "code,product_name,brands,labels_tags,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url";
+    fetch(API + "/api/v2/product/" + encodeURIComponent(code) + ".json?fields=" + fields)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.status === 1 && d.product) renderProduct(d.product);
+        else showMessage("No product found for " + code + ". Check the digits or search by name.", true);
+      })
+      .catch(function () {
+        showMessage("Could not reach Open Food Facts. Check your internet connection and try again.", true);
+      });
+  }
+
+  function searchName(q) {
+    showMessage("Searching for " + q + "...");
+    fetch(API + "/cgi/search.pl?search_terms=" + encodeURIComponent(q) + "&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,brands")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var list = (d.products || []).filter(function (p) { return p.code && p.product_name; });
+        if (!list.length) { showMessage("No products matched " + q + ". Try a shorter name or a barcode.", true); return; }
+        var box = el("div", "results");
+        list.forEach(function (p) {
+          var b = el("button", "", p.product_name + (p.brands ? " (" + p.brands.split(",")[0] + ")" : ""));
+          b.type = "button";
+          b.addEventListener("click", function () { lookupCode(p.code); });
+          box.appendChild(b);
+        });
+        var out = $("out");
+        out.textContent = "";
+        out.appendChild(box);
+      })
+      .catch(function () {
+        showMessage("Could not reach Open Food Facts. Check your internet connection and try again.", true);
+      });
+  }
+
+  $("lookup-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var q = $("q").value.trim();
+    if (!q) return;
+    if (/^\d{8,14}$/.test(q)) lookupCode(q); else searchName(q);
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (c) {
+    c.addEventListener("click", function () { $("q").value = c.dataset.code; lookupCode(c.dataset.code); });
+  });
+
+  /* Barcode scanning: live camera or a photo of the barcode */
+  var FORMATS = typeof Html5QrcodeSupportedFormats !== "undefined"
+    ? [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E]
+    : [];
+  var scanner = null;
+
+  function stopScan() {
+    var s = scanner;
+    scanner = null;
+    $("reader").hidden = true;
+    $("scan").textContent = "Scan";
+    if (s) s.stop().then(function () { s.clear(); }).catch(function () {});
+  }
+
+  function gotCode(text) {
+    if (!/^\d{8,14}$/.test(text)) return false;
+    $("q").value = text;
+    lookupCode(text);
+    return true;
+  }
+
+  $("scan").addEventListener("click", function () {
+    if (scanner) { stopScan(); return; }
+    if (typeof Html5Qrcode === "undefined") {
+      showMessage("The scanner did not load. Type the barcode instead.", true);
+      return;
+    }
+    $("reader").hidden = false;
+    $("scan").textContent = "Stop";
+    scanner = new Html5Qrcode("reader", { formatsToSupport: FORMATS, experimentalFeatures: { useBarCodeDetectorIfSupported: true }, verbose: false });
+    scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 260, height: 120 } },
+      function (text) { if (gotCode(text)) stopScan(); },
+      function () {}
+    ).catch(function () {
+      stopScan();
+      showMessage("Camera access was blocked. Allow the camera for this site, or use Photo or type the barcode.", true);
+    });
+  });
+
+  $("photo").addEventListener("click", function () { $("photo-input").click(); });
+  $("photo-input").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    if (typeof Html5Qrcode === "undefined") {
+      showMessage("The scanner did not load. Type the barcode instead.", true);
+      return;
+    }
+    showMessage("Reading the barcode...");
+    var reader = new Html5Qrcode("reader-file", { formatsToSupport: FORMATS, verbose: false });
+    reader.scanFile(f, false).then(function (text) {
+      if (!gotCode(text)) showMessage("Found " + text + ", which is not a product barcode. Try again.", true);
+    }).catch(function () {
+      showMessage("Could not read a barcode in that photo. Move closer, keep it sharp and flat, and try again.", true);
+    }).then(function () { try { reader.clear(); } catch (e) {} });
+    this.value = "";
+  });
+
+  /* Produce stickers */
+  $("plu-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = $("plu").value.trim();
+    var out = $("plu-out");
+    out.textContent = "";
+    if (!/^\d{4,5}$/.test(v)) {
+      out.appendChild(el("p", "err", "Enter the 4 or 5 digits printed on the sticker."));
+      return;
+    }
+    var item = v.length === 5 ? v.slice(1) : v;
+    var kind = "Conventionally grown";
+    var good = false;
+    if (v.length === 5 && v[0] === "9") { kind = "Organic"; good = true; }
+    else if (v.length === 5 && v[0] === "8") { kind = "Genetically engineered"; }
+    else if (v.length === 5) { kind = "Not a standard produce code"; }
+    var card = el("div", "card");
+    var s = el("div", good ? "sticker" : "sticker no", kind);
+    card.appendChild(s);
+    card.appendChild(el("p", "note", "Item code " + item + (PLU_NAMES[item] ? ": " + PLU_NAMES[item] : "") + "."));
+    out.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>
