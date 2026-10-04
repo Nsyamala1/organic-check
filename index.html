@@ -239,26 +239,51 @@ a { color: var(--leaf); }
       });
   }
 
+  function fetchJson(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function showSearchResults(list, q) {
+    if (!list.length) { showMessage("No products matched " + q + ". Try a shorter name or a barcode.", true); return; }
+    var box = el("div", "results");
+    list.forEach(function (p) {
+      var b = el("button", "", p.name + (p.brand ? " (" + p.brand + ")" : ""));
+      b.type = "button";
+      b.addEventListener("click", function () { lookupCode(p.code); });
+      box.appendChild(b);
+    });
+    var out = $("out");
+    out.textContent = "";
+    out.appendChild(box);
+  }
+
   function searchName(q) {
     showMessage("Searching for " + q + "...");
-    fetch(API + "/cgi/search.pl?search_terms=" + encodeURIComponent(q) + "&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,brands")
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        var list = (d.products || []).filter(function (p) { return p.code && p.product_name; });
-        if (!list.length) { showMessage("No products matched " + q + ". Try a shorter name or a barcode.", true); return; }
-        var box = el("div", "results");
-        list.forEach(function (p) {
-          var b = el("button", "", p.product_name + (p.brands ? " (" + p.brands.split(",")[0] + ")" : ""));
-          b.type = "button";
-          b.addEventListener("click", function () { lookupCode(p.code); });
-          box.appendChild(b);
-        });
-        var out = $("out");
-        out.textContent = "";
-        out.appendChild(box);
-      })
+    var enc = encodeURIComponent(q);
+    var primary = "https://search.openfoodfacts.org/search?q=" + enc + "&page_size=8&fields=code,product_name,brands";
+    var backup = API + "/cgi/search.pl?search_terms=" + enc + "&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,brands";
+
+    function fromPrimary(d) {
+      return (d.hits || []).filter(function (p) { return p.code && p.product_name; }).map(function (p) {
+        var b = Array.isArray(p.brands) ? p.brands[0] : (p.brands || "").split(",")[0];
+        return { code: p.code, name: p.product_name, brand: b };
+      });
+    }
+    function fromBackup(d) {
+      return (d.products || []).filter(function (p) { return p.code && p.product_name; }).map(function (p) {
+        return { code: p.code, name: p.product_name, brand: (p.brands || "").split(",")[0] };
+      });
+    }
+
+    fetchJson(primary).then(fromPrimary)
+      .catch(function () { return fetchJson(backup).then(fromBackup); })
+      .catch(function () { return fetchJson(backup).then(fromBackup); })
+      .then(function (list) { showSearchResults(list, q); })
       .catch(function () {
-        showMessage("Could not reach Open Food Facts. Check your internet connection and try again.", true);
+        showMessage("Open Food Facts is busy or unreachable right now. Wait a few seconds and tap Check again, or type the barcode.", true);
       });
   }
 
