@@ -78,6 +78,11 @@ a { color: var(--leaf); }
 .pluguide div { display: flex; gap: 12px; align-items: baseline; }
 .pluguide code { font: 500 0.85rem var(--font-mono); background: var(--bg); padding: 2px 8px; border-radius: 6px; flex: none; }
 .err { color: var(--warn); }
+.plu-head { display: flex; gap: 14px; align-items: center; }
+.plu-head img { width: 96px; height: 96px; object-fit: cover; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); flex: none; }
+.plu-head .name { font: 600 1.2rem/1.2 var(--font-display); overflow-wrap: anywhere; }
+.plu-head .code { font: 500 0.85rem var(--font-mono); color: var(--muted); margin-top: 4px; }
+.credit { font-size: 0.75rem; color: var(--muted); }
 @media (prefers-reduced-motion: no-preference) { .sticker { transition: transform .2s; } .sticker:hover { transform: rotate(0deg); } }
 </style>
 </head>
@@ -137,6 +142,7 @@ a { color: var(--leaf); }
 </div>
 
 <script src="html5-qrcode.min.js"></script>
+<script src="plu-data.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -373,10 +379,33 @@ a { color: var(--leaf); }
     if (v.length === 5 && v[0] === "9") { kind = "Organic"; good = true; }
     else if (v.length === 5 && v[0] === "8") { kind = "Genetically engineered"; }
     else if (v.length === 5) { kind = "Not a standard produce code"; }
+
+    var entry = (window.PLU || {})[item];
     var card = el("div", "card");
-    var s = el("div", good ? "sticker" : "sticker no", kind);
-    card.appendChild(s);
-    card.appendChild(el("p", "note", "Item code " + item + (PLU_NAMES[item] ? ": " + PLU_NAMES[item] : "") + "."));
+    var head = el("div", "plu-head");
+    var photo = entry && entry[1] && window.PLU_IMG ? window.PLU_IMG[entry[1]] : "";
+    if (photo) {
+      var img = el("img");
+      img.src = photo;
+      img.alt = entry[1];
+      img.loading = "lazy";
+      img.addEventListener("error", function () { img.remove(); });
+      head.appendChild(img);
+    }
+    var txt = el("div");
+    txt.appendChild(el("div", "name", entry ? entry[0] : "Code not in the list"));
+    txt.appendChild(el("div", "code", "Item code " + item));
+    head.appendChild(txt);
+    card.appendChild(head);
+
+    card.appendChild(el("div", good ? "sticker" : "sticker no", kind));
+
+    if (!entry) {
+      card.appendChild(el("p", "note", "This code is not in the standard list. Stores can assign their own codes, so check the sticker or ask the produce staff."));
+    } else if (/^retailer assigned/i.test(entry[0])) {
+      card.appendChild(el("p", "note", "The store chooses what this code means, so it does not name a specific item."));
+    }
+    if (photo) card.appendChild(el("p", "credit", "Photo from Wikipedia, for illustration. Your item may look different."));
     out.appendChild(card);
   });
 })();
