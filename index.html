@@ -72,6 +72,16 @@ button.alt { background: transparent; color: var(--leaf); }
 a { color: var(--leaf); }
 .results { display: flex; flex-direction: column; gap: 8px; }
 .results button { text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: 500 0.95rem var(--font-body); cursor: pointer; overflow-wrap: anywhere; }
+.tabs { flex-wrap: wrap; }
+.tab { flex: 1 1 110px; }
+.op { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.op .on { font: 600 1rem/1.25 var(--font-display); overflow-wrap: anywhere; }
+.op .meta { font-size: 0.85rem; color: var(--muted); overflow-wrap: anywhere; }
+.pill { align-self: flex-start; font: 500 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px; border: 1.5px solid var(--line); }
+.pill.C { border-color: var(--leaf); color: var(--leaf); }
+.pill.S, .pill.U, .pill.R { border-color: var(--warn); color: var(--warn); }
+.oplist { display: flex; flex-direction: column; gap: 8px; }
+button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--leaf); background: transparent; color: var(--leaf); font: 600 0.9rem var(--font-body); cursor: pointer; }
 .lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
 .lists h3 { font: 600 1rem var(--font-display); margin: 0 0 8px; }
 .lists ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
@@ -103,6 +113,7 @@ a { color: var(--leaf); }
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-food" aria-selected="true" aria-controls="panel-food">Packaged food</button>
     <button class="tab" role="tab" id="tab-produce" aria-selected="false" aria-controls="panel-produce">Fresh produce</button>
+    <button class="tab" role="tab" id="tab-usda" aria-selected="false" aria-controls="panel-usda">USDA list</button>
   </div>
 
   <section class="panel" id="panel-food" role="tabpanel" aria-labelledby="tab-food">
@@ -120,7 +131,7 @@ a { color: var(--leaf); }
     <div id="reader" hidden></div>
     <div id="reader-file" hidden></div>
     <div id="out" aria-live="polite"></div>
-    <p class="note">Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To confirm a brand is certified, search it in the <a href="https://organic.ams.usda.gov/integrity/" target="_blank" rel="noopener">USDA Organic Integrity Database</a>.</p>
+    <p class="note">Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To look for the company in USDA's certified list, use the USDA list tab.</p>
   </section>
 
   <section class="panel" id="panel-produce" role="tabpanel" aria-labelledby="tab-produce" hidden>
@@ -144,6 +155,25 @@ a { color: var(--leaf); }
         <div><h3>Dirty Dozen: buy organic</h3><ul id="dirty"></ul></div>
         <div><h3>Clean Fifteen: lower risk</h3><ul id="clean"></ul></div>
       </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-usda" role="tabpanel" aria-labelledby="tab-usda" hidden>
+    <form id="usda-form">
+      <input type="text" id="usda-q" placeholder="Company or certifier name" autocomplete="off" aria-label="Company or certifier name">
+      <button class="go" type="submit">Search</button>
+    </form>
+    <div class="chips"><span>Try:</span>
+      <button class="chip" data-usda="Nature's Path">Nature's Path</button>
+      <button class="chip" data-usda="CROPP Cooperative">CROPP Cooperative</button>
+      <button class="chip" data-usda="Oregon Tilth">Oregon Tilth</button>
+    </div>
+    <div id="usda-out" aria-live="polite"></div>
+    <div class="card">
+      <h2>How to use this list</h2>
+      <p class="note" style="margin:0">This searches USDA's list of organic operations by business name. It lists companies and farms, not products or brands, so you decide whether an entry is the company you mean.</p>
+      <p class="note" style="margin:0">A brand can be missing because it is certified under a parent company or a contract manufacturer. No result does not mean a product is not organic. On the package, look for the USDA Organic seal and the line "Certified organic by", then search that certifier or the "Distributed by" company here.</p>
+      <p class="note" style="margin:0" id="usda-date">Source: USDA Organic INTEGRITY Database, monthly snapshot. For the latest status, check <a href="https://organic.ams.usda.gov/integrity/" target="_blank" rel="noopener">the USDA site</a>.</p>
     </div>
   </section>
 </div>
@@ -177,13 +207,14 @@ a { color: var(--leaf); }
 
   /* Tabs */
   function selectTab(which) {
-    ["food", "produce"].forEach(function (k) {
+    ["food", "produce", "usda"].forEach(function (k) {
       $("tab-" + k).setAttribute("aria-selected", String(k === which));
       $("panel-" + k).hidden = k !== which;
     });
   }
   $("tab-food").addEventListener("click", function () { selectTab("food"); });
   $("tab-produce").addEventListener("click", function () { selectTab("produce"); });
+  $("tab-usda").addEventListener("click", function () { selectTab("usda"); });
 
   /* Packaged food */
   function showMessage(text, isErr) {
@@ -233,6 +264,18 @@ a { color: var(--leaf); }
     }
     if (p.ingredients_text) card.appendChild(el("p", "ing", "Ingredients: " + p.ingredients_text));
 
+    var companies = [(p.brand_owner || "").trim()].concat((p.brands || "").split(",").map(function (x) { return x.trim(); }).slice(0, 2)).filter(Boolean);
+    if (companies.length) {
+      var go = el("button", "linkish", "Look up this company in the USDA list");
+      go.type = "button";
+      go.addEventListener("click", function () {
+        selectTab("usda");
+        usdaSearch(companies);
+        window.scrollTo(0, 0);
+      });
+      card.appendChild(go);
+    }
+
     var out = $("out");
     out.textContent = "";
     out.appendChild(card);
@@ -240,7 +283,7 @@ a { color: var(--leaf); }
 
   function lookupCode(code) {
     showMessage("Looking up " + code + "...");
-    var fields = "code,product_name,brands,labels_tags,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url";
+    var fields = "code,product_name,brands,brand_owner,labels_tags,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url";
     fetch(API + "/api/v2/product/" + encodeURIComponent(code) + ".json?fields=" + fields)
       .then(function (r) { return r.json(); })
       .then(function (d) {
@@ -368,6 +411,122 @@ a { color: var(--leaf); }
       showMessage("Could not read a barcode in that photo. Move closer, keep it sharp and flat, and try again.", true);
     }).then(function () { try { reader.clear(); } catch (e) {} });
     this.value = "";
+  });
+
+  /* USDA certified operations search. The list is large, so it loads on first use. */
+  var STATUS = { C: "Certified", S: "Suspended", U: "Surrendered", R: "Revoked" };
+  var STOP = { inc: 1, incorporated: 1, llc: 1, corp: 1, corporation: 1, co: 1, company: 1, companies: 1, ltd: 1, limited: 1, lp: 1, llp: 1, the: 1, us: 1, usa: 1, and: 1, of: 1, dba: 1 };
+  var usdaLoading = null, usdaIndex = null;
+
+  function tokens(str, keepStop) {
+    var t = (str || "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/['’]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+    if (keepStop) return t;
+    var u = t.filter(function (x) { return !STOP[x]; });
+    return u.length ? u : t;
+  }
+
+  function loadUsda() {
+    if (window.USDA) return Promise.resolve();
+    if (usdaLoading) return usdaLoading;
+    usdaLoading = new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = "usda-ops.js";
+      sc.onload = function () { resolve(); };
+      sc.onerror = function () { usdaLoading = null; reject(new Error("load failed")); };
+      document.head.appendChild(sc);
+    });
+    return usdaLoading;
+  }
+
+  function buildIndex() {
+    if (usdaIndex) return;
+    usdaIndex = window.USDA.ops.map(function (o) { return " " + tokens(o[0] + " " + o[1], true).join(" ") + " "; });
+    var d = new Date(window.USDA.date + "T12:00:00");
+    $("usda-date").firstChild.textContent = "Source: USDA Organic INTEGRITY Database, snapshot of " + d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) + ". For the latest status, check ";
+  }
+
+  function usdaFind(q) {
+    var qt = tokens(q);
+    if (!qt.length) return { ops: [], total: 0, certs: [] };
+    var phrase = " " + qt.join(" ");
+    var hits = [];
+    for (var i = 0; i < usdaIndex.length; i++) {
+      var hay = usdaIndex[i], ok = true;
+      for (var j = 0; j < qt.length; j++) { if (hay.indexOf(" " + qt[j]) === -1) { ok = false; break; } }
+      if (!ok) continue;
+      var o = window.USDA.ops[i];
+      var score = (hay.indexOf(phrase + " ") !== -1 ? 0 : 1) * 10 + "CSUR".indexOf(o[2]);
+      hits.push([score, hay.length, i]);
+    }
+    hits.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+    var certs = [];
+    window.USDA.cert.forEach(function (c, idx) {
+      var ct = " " + tokens(c, true).join(" ") + " ";
+      if (qt.every(function (t) { return ct.indexOf(" " + t) !== -1; })) certs.push(idx);
+    });
+    return { ops: hits.slice(0, 25).map(function (h) { return window.USDA.ops[h[2]]; }), total: hits.length, certs: certs };
+  }
+
+  function usdaRender(queries) {
+    var out = $("usda-out");
+    out.textContent = "";
+    var q = queries[0], r = usdaFind(q), tried = [];
+    for (var k = 1; k < queries.length && !r.ops.length; k++) {
+      tried.push(q);
+      q = queries[k];
+      r = usdaFind(q);
+    }
+    $("usda-q").value = q;
+    var card = el("div", "card");
+    if (tried.length && r.ops.length) card.appendChild(el("p", "note", "Nothing matched " + tried.join(" or ") + ", so this shows results for " + q + "."));
+
+    r.certs.forEach(function (idx) {
+      var n = 0;
+      window.USDA.ops.forEach(function (o) { if (o[3] === idx && o[2] === "C") n++; });
+      var box = el("div", "flag low");
+      box.appendChild(el("strong", "", "USDA-accredited certifier"));
+      box.appendChild(el("span", "", window.USDA.cert[idx] + " is on USDA's list and certifies " + n.toLocaleString() + " current operations."));
+      card.appendChild(box);
+    });
+
+    if (!r.ops.length && r.certs.length) {
+      card.appendChild(el("p", "note", "No company or farm is listed under that name."));
+    } else if (!r.ops.length) {
+      card.appendChild(el("h2", "", "No company matched " + queries.join(" or ")));
+      card.appendChild(el("p", "note", "That does not mean a product is not organic. The brand may be certified under a parent company or a contract manufacturer. Try the \"Distributed by\" name or the certifier printed on the package."));
+    } else {
+      card.appendChild(el("h2", "", r.total === 1 ? "1 possible match" : r.total.toLocaleString() + " possible matches"));
+      card.appendChild(el("p", "note", "Check the name and location to decide whether an entry is the company you mean."));
+      var list = el("div", "oplist");
+      r.ops.forEach(function (o) {
+        var row = el("div", "op");
+        row.appendChild(el("div", "on", o[0]));
+        if (o[1]) row.appendChild(el("div", "meta", "Also known as: " + o[1]));
+        row.appendChild(el("span", "pill " + o[2], STATUS[o[2]] || "Unknown"));
+        row.appendChild(el("div", "meta", (o[4] ? o[4] + ". " : "") + "Certifier: " + window.USDA.cert[o[3]]));
+        list.appendChild(row);
+      });
+      card.appendChild(list);
+      if (r.total > r.ops.length) card.appendChild(el("p", "note", "Showing the first " + r.ops.length + ". Add another word to narrow it down."));
+    }
+    out.appendChild(card);
+  }
+
+  function usdaSearch(input) {
+    var queries = (Array.isArray(input) ? input : [input]).map(function (x) { return (x || "").trim(); }).filter(function (x, i, a) { return x.length >= 2 && a.indexOf(x) === i; });
+    var out = $("usda-out");
+    out.textContent = "";
+    if (!queries.length) { out.appendChild(el("p", "err", "Type at least 2 letters of a company or certifier name.")); return; }
+    out.appendChild(el("p", "note", "Loading the USDA list..."));
+    loadUsda().then(function () { buildIndex(); usdaRender(queries); }).catch(function () {
+      out.textContent = "";
+      out.appendChild(el("p", "err", "The USDA list did not load. Check your connection and tap Search again."));
+    });
+  }
+
+  $("usda-form").addEventListener("submit", function (e) { e.preventDefault(); usdaSearch($("usda-q").value); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-usda]"), function (c) {
+    c.addEventListener("click", function () { $("usda-q").value = c.dataset.usda; usdaSearch(c.dataset.usda); });
   });
 
   /* Pesticide residue groups from EWG's 2025 Dirty Dozen and Clean Fifteen */
