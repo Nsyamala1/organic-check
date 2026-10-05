@@ -35,6 +35,7 @@
   --leaf: #6fcf8d; --sticker: #f0cb3c; --sticker-ink: #2b2406; --warn: #e48a5c; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-body); }
 .wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 20px; }
 h1 { font: 800 clamp(2rem, 8vw, 2.8rem)/1 var(--font-display); letter-spacing: -0.02em; margin: 0; }
@@ -83,6 +84,12 @@ a { color: var(--leaf); }
 .plu-head .name { font: 600 1.2rem/1.2 var(--font-display); overflow-wrap: anywhere; }
 .plu-head .code { font: 500 0.85rem var(--font-mono); color: var(--muted); margin-top: 4px; }
 .credit { font-size: 0.75rem; color: var(--muted); }
+.flag { border-radius: 10px; padding: 12px 14px; font-size: 0.92rem; border: 1.5px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.flag strong { font: 600 1rem var(--font-display); }
+.flag.high { border-color: var(--warn); }
+.flag.high strong { color: var(--warn); }
+.flag.low { border-color: var(--leaf); }
+.flag.low strong { color: var(--leaf); }
 @media (prefers-reduced-motion: no-preference) { .sticker { transition: transform .2s; } .sticker:hover { transform: rotate(0deg); } }
 </style>
 </head>
@@ -363,6 +370,32 @@ a { color: var(--leaf); }
     this.value = "";
   });
 
+  /* Pesticide residue groups from EWG's 2025 Dirty Dozen and Clean Fifteen */
+  var DIRTY_RE = /\b(spinach|strawberr(y|ies)|kale|collards?|mustard greens?|grapes?|peach(es)?|cherr(y|ies)|nectarines?|pears?|apples?|blackberr(y|ies)|blueberr(y|ies))\b|(?<!sweet )\bpotato(es)?\b/i;
+  var CLEAN_RE = /pineapple|\b(corn|avocados?|papayas?|onions?|asparagus|cabbage|watermelon|cantaloupe|mushrooms?|mangos?|mangoes|carrots?|kiwi|kiwifruit)\b|sweet potato/i;
+
+  var NOT_THESE_RE = /sugar apple|custard apple|cactus pear|prickly pear|water spinach|strawberry corn/i;
+
+  function pesticideFlag(name, organic) {
+    if (NOT_THESE_RE.test(name)) return null;
+    var group = DIRTY_RE.test(name) ? "high" : (CLEAN_RE.test(name) ? "low" : "");
+    if (!group) return null;
+    var box = el("div", "flag " + group);
+    if (organic) {
+      box.appendChild(el("strong", "", group === "high" ? "Dirty Dozen item, bought organic" : "Clean Fifteen item, bought organic"));
+      box.appendChild(el("span", "", group === "high"
+        ? "Conventional versions of this item carry some of the highest pesticide residues in EWG's tests. Choosing organic is the right call."
+        : "Conventional versions of this item test low for pesticide residue, so organic matters less here."));
+    } else if (group === "high") {
+      box.appendChild(el("strong", "", "Dirty Dozen: worth buying organic"));
+      box.appendChild(el("span", "", "EWG's tests found some of the highest pesticide residues on conventional versions of this item."));
+    } else {
+      box.appendChild(el("strong", "", "Clean Fifteen: fine to buy conventional"));
+      box.appendChild(el("span", "", "EWG's tests found low pesticide residue on conventional versions of this item."));
+    }
+    return box;
+  }
+
   /* Produce stickers */
   $("plu-form").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -399,6 +432,9 @@ a { color: var(--leaf); }
     card.appendChild(head);
 
     card.appendChild(el("div", good ? "sticker" : "sticker no", kind));
+
+    var flag = entry ? pesticideFlag(entry[0], good) : null;
+    if (flag) card.appendChild(flag);
 
     if (!entry) {
       card.appendChild(el("p", "note", "This code is not in the standard list. Stores can assign their own codes, so check the sticker or ask the produce staff."));
