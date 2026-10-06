@@ -53,7 +53,10 @@ button.go { background: var(--leaf); color: var(--bg); }
 button.alt { background: transparent; color: var(--leaf); }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 0.85rem; }
 .chip { padding: 5px 10px; border: 1px dashed var(--line); border-radius: 999px; background: transparent; color: var(--ink); font: 500 0.8rem var(--font-mono); cursor: pointer; }
-#reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; }
+#viewfinder { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; max-height: 60vh; }
+#viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; }
+#viewfinder .guide { position: absolute; left: 6%; right: 6%; top: 28%; bottom: 28%; border: 3px solid var(--sticker); border-radius: 10px; box-shadow: 0 0 0 999px rgba(0,0,0,0.35); pointer-events: none; }
+#viewfinder #torch { position: absolute; right: 10px; top: 10px; padding: 6px 12px; background: rgba(0,0,0,0.55); color: #fff; border-color: #fff; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .prod { display: flex; gap: 14px; align-items: center; }
 .prod img { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid var(--line); }
@@ -128,8 +131,12 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
       <button class="chip" data-code="3017620422003">3017620422003</button>
       <button class="chip" data-code="5449000000996">5449000000996</button>
     </div>
-    <div id="reader" hidden></div>
-    <div id="reader-file" hidden></div>
+    <div id="viewfinder" hidden>
+      <video id="cam" playsinline muted></video>
+      <div class="guide" aria-hidden="true"></div>
+      <button type="button" id="torch" class="alt" hidden>Light</button>
+    </div>
+    <p class="note" id="scan-hint" hidden>Hold the barcode flat, about 15 cm (6 in) from the camera, inside the frame. Tap Stop to cancel.</p>
     <div id="out" aria-live="polite"></div>
     <p class="note">Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To look for the company in USDA's certified list, use the USDA list tab.</p>
   </section>
@@ -178,7 +185,7 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
   </section>
 </div>
 
-<script src="html5-qrcode.min.js"></script>
+<script src="barcode-detector.js"></script>
 <script src="plu-data.js"></script>
 <script>
 (function () {
@@ -355,62 +362,151 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
   });
 
   /* Barcode scanning: live camera or a photo of the barcode */
-  var FORMATS = typeof Html5QrcodeSupportedFormats !== "undefined"
-    ? [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E]
-    : [];
-  var scanner = null;
+  var detector = null, stream = null, scanning = false, loopTimer = null;
 
-  function stopScan() {
-    var s = scanner;
-    scanner = null;
-    $("reader").hidden = true;
-    $("scan").textContent = "Scan";
-    if (s) s.stop().then(function () { s.clear(); }).catch(function () {});
+  function getDetector() {
+    if (detector) return Promise.resolve(detector);
+    var formats = ["ean_13", "ean_8", "upc_a", "upc_e"];
+    function ponyfill() {
+      var api = window.BarcodeDetectionAPI;
+      if (!api) throw new Error("scanner library missing");
+      api.setZXingModuleOverrides({ locateFile: function (path, prefix) { return path.endsWith(".wasm") ? "zxing_reader.wasm" : prefix + path; } });
+      detector = new api.BarcodeDetector({ formats: formats });
+      return detector;
+    }
+    if (window.BarcodeDetector && window.BarcodeDetector.getSupportedFormats) {
+      return window.BarcodeDetector.getSupportedFormats().then(function (sup) {
+        if (formats.every(function (f) { return sup.indexOf(f) !== -1; })) { detector = new window.BarcodeDetector({ formats: formats }); return detector; }
+        return ponyfill();
+      }).catch(function () { return ponyfill(); });
+    }
+    try { return Promise.resolve(ponyfill()); } catch (e) { return Promise.reject(e); }
   }
 
-  function gotCode(text) {
-    if (!/^\d{8,14}$/.test(text)) return false;
-    $("q").value = text;
-    lookupCode(text);
-    return true;
+  /* GTIN check digit, so a misread never triggers a lookup */
+  function validGtin(code) {
+    if (!/^\d{8}$|^\d{12,14}$/.test(code)) return false;
+    var d = code.split("").map(Number), check = d.pop(), sum = 0;
+    for (var i = d.length - 1, w = 3; i >= 0; i--, w = 4 - w) sum += d[i] * w;
+    return (10 - (sum % 10)) % 10 === check;
+  }
+
+  function pickCode(results) {
+    for (var i = 0; i < results.length; i++) { if (validGtin(results[i].rawValue)) return results[i].rawValue; }
+    return null;
+  }
+
+  function stopScan() {
+    scanning = false;
+    clearTimeout(loopTimer);
+    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+    stream = null;
+    $("cam").srcObject = null;
+    $("viewfinder").hidden = true;
+    $("scan-hint").hidden = true;
+    $("torch").hidden = true;
+    $("scan").textContent = "Scan";
+  }
+
+  function foundCode(code) {
+    $("q").value = code;
+    lookupCode(code);
+  }
+
+  function scanLoop() {
+    if (!scanning) return;
+    var v = $("cam");
+    if (v.readyState < 2) { loopTimer = setTimeout(scanLoop, 100); return; }
+    detector.detect(v).then(function (res) {
+      var code = pickCode(res);
+      if (code && scanning) { stopScan(); foundCode(code); return; }
+      loopTimer = setTimeout(scanLoop, 120);
+    }).catch(function () { loopTimer = setTimeout(scanLoop, 250); });
+  }
+
+  function openCamera() {
+    var tries = [
+      { video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+      { video: { facingMode: { ideal: "environment" } }, audio: false },
+      { video: true, audio: false }
+    ];
+    var i = 0;
+    function next(lastErr) {
+      if (i >= tries.length) return Promise.reject(lastErr);
+      return navigator.mediaDevices.getUserMedia(tries[i++]).catch(function (err) {
+        if (err && (err.name === "NotAllowedError" || err.name === "SecurityError")) throw err;
+        return next(err);
+      });
+    }
+    return next(null);
   }
 
   $("scan").addEventListener("click", function () {
-    if (scanner) { stopScan(); return; }
-    if (typeof Html5Qrcode === "undefined") {
-      showMessage("The scanner did not load. Type the barcode instead.", true);
+    if (scanning) { stopScan(); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showMessage("This browser cannot open the camera here. Use Photo or type the barcode.", true);
       return;
     }
-    $("reader").hidden = false;
+    scanning = true;
     $("scan").textContent = "Stop";
-    scanner = new Html5Qrcode("reader", { formatsToSupport: FORMATS, experimentalFeatures: { useBarCodeDetectorIfSupported: true }, verbose: false });
-    scanner.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 260, height: 120 } },
-      function (text) { if (gotCode(text)) stopScan(); },
-      function () {}
-    ).catch(function () {
+    $("out").textContent = "";
+    showMessage("Starting the camera...");
+    getDetector().then(function () { return openCamera(); }).then(function (s) {
+      if (!scanning) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+      stream = s;
+      var v = $("cam");
+      v.srcObject = s;
+      $("viewfinder").hidden = false;
+      $("scan-hint").hidden = false;
+      $("out").textContent = "";
+      var track = s.getVideoTracks()[0];
+      try {
+        var caps = track.getCapabilities ? track.getCapabilities() : {};
+        if (caps.focusMode && caps.focusMode.indexOf("continuous") !== -1) track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(function () {});
+        if (caps.torch) {
+          var on = false;
+          $("torch").hidden = false;
+          $("torch").onclick = function () { on = !on; track.applyConstraints({ advanced: [{ torch: on }] }).catch(function () {}); };
+        }
+      } catch (e) {}
+      return v.play().then(scanLoop);
+    }).catch(function (err) {
       stopScan();
-      showMessage("Camera access was blocked. Allow the camera for this site, or use Photo or type the barcode.", true);
+      var n = err && err.name;
+      if (n === "NotAllowedError" || n === "SecurityError") showMessage("Camera access was blocked. Allow the camera for this site in your browser settings, or use Photo or type the barcode.", true);
+      else if (n === "NotFoundError" || n === "OverconstrainedError") showMessage("No camera was found on this device. Use Photo or type the barcode.", true);
+      else if (n === "NotReadableError") showMessage("The camera is in use by another app. Close it and try again.", true);
+      else showMessage("The scanner could not start. Use Photo or type the barcode.", true);
     });
   });
+
+  function readPhoto(file) {
+    return createImageBitmap(file, { imageOrientation: "from-image" }).catch(function () { return createImageBitmap(file); }).then(function (bmp) {
+      function attempt(maxSide) {
+        var scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(bmp.width * scale));
+        c.height = Math.max(1, Math.round(bmp.height * scale));
+        c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+        return detector.detect(c).then(pickCode);
+      }
+      return attempt(4096).then(function (c) { return c || attempt(1600); }).then(function (c) { return c || attempt(900); });
+    });
+  }
 
   $("photo").addEventListener("click", function () { $("photo-input").click(); });
   $("photo-input").addEventListener("change", function () {
     var f = this.files && this.files[0];
-    if (!f) return;
-    if (typeof Html5Qrcode === "undefined") {
-      showMessage("The scanner did not load. Type the barcode instead.", true);
-      return;
-    }
-    showMessage("Reading the barcode...");
-    var reader = new Html5Qrcode("reader-file", { formatsToSupport: FORMATS, verbose: false });
-    reader.scanFile(f, false).then(function (text) {
-      if (!gotCode(text)) showMessage("Found " + text + ", which is not a product barcode. Try again.", true);
-    }).catch(function () {
-      showMessage("Could not read a barcode in that photo. Move closer, keep it sharp and flat, and try again.", true);
-    }).then(function () { try { reader.clear(); } catch (e) {} });
     this.value = "";
+    if (!f) return;
+    if (scanning) stopScan();
+    showMessage("Reading the barcode...");
+    getDetector().then(function () { return readPhoto(f); }).then(function (code) {
+      if (code) foundCode(code);
+      else showMessage("Could not read a barcode in that photo. Fill the frame with the barcode, keep it sharp and flat, and try again.", true);
+    }).catch(function () {
+      showMessage("The scanner could not start. Type the barcode instead.", true);
+    });
   });
 
   /* USDA certified operations search. The list is large, so it loads on first use. */
