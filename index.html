@@ -52,8 +52,18 @@ svg { flex: none; }
 .wrap { max-width: 640px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) calc(104px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 18px; }
 main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .appbar { display: flex; align-items: center; gap: 10px; }
+.country { margin-left: auto; position: relative; }
+.country select { appearance: none; -webkit-appearance: none; min-height: 40px; padding: 8px 34px 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: 600 0.88rem var(--font-body); cursor: pointer; }
+.country::after { content: ""; position: absolute; right: 14px; top: 50%; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.chip.word { font-family: var(--font-body); font-size: 0.85rem; }
+.codes { display: grid; gap: 8px; }
+.codes a { display: flex; gap: 12px; align-items: baseline; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; min-width: 0; }
+.codes a code { font: 500 0.82rem var(--font-mono); color: var(--good); flex: none; }
+.codes a span { overflow-wrap: anywhere; }
+@media (hover: hover) { .codes a:hover { background: var(--good-bg); } }
 .logo { width: 38px; height: 38px; border-radius: 50%; background: var(--deep); display: grid; place-items: center; color: var(--sticker); }
-h1 { font: 800 1.35rem/1 var(--font-display); letter-spacing: -0.01em; margin: 0; }
+h1 { white-space: nowrap; font: 800 1.35rem/1 var(--font-display); letter-spacing: -0.01em; margin: 0; }
 h2 { font: 600 1.15rem/1.2 var(--font-display); margin: 0; }
 .panel-head { display: flex; flex-direction: column; gap: 4px; }
 .panel-head h2 { font: 800 1.6rem/1.1 var(--font-display); letter-spacing: -0.01em; }
@@ -180,6 +190,14 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
   <header class="appbar">
     <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c3-5 6-8 10-10"/></svg></span>
     <h1 translate="no">Organic Check</h1>
+    <label class="country"><span class="sr">Country</span>
+      <select id="country" name="country" autocomplete="off">
+        <option value="us">US</option>
+        <option value="in">India</option>
+        <option value="au">Australia</option>
+        <option value="gb">UK</option>
+      </select>
+    </label>
   </header>
 
   <nav class="tabs" role="tablist" id="tablist" aria-label="Sections">
@@ -213,12 +231,9 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
         <button class="go" type="submit">Check</button>
       </div>
     </form>
-    <div class="chips"><span>Try an example:</span>
-      <button class="chip" data-code="3017620422003">3017620422003</button>
-      <button class="chip" data-code="5449000000996">5449000000996</button>
-    </div>
+    <div class="chips" id="food-examples"><span>Try an example:</span></div>
     <div id="out" aria-live="polite"></div>
-    <p class="note">Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To look for the company in USDA's certified list, use the USDA list tab.</p>
+    <p class="note" id="food-note">Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To look for the company in USDA's certified list, use the USDA list tab.</p>
   </section>
 
   <section class="panel" id="panel-produce" role="tabpanel" aria-labelledby="tab-produce" hidden>
@@ -235,18 +250,20 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
         <div><code>94011</code><span>Five digits starting with 9: organic.</span></div>
         <div><code>84011</code><span>Five digits starting with 8: genetically engineered (rarely used).</span></div>
       </div>
+      <p class="note" id="plu-note" hidden></p>
     </div>
     <div class="card">
       <h2>Where organic matters most</h2>
-      <p class="note" style="margin:0">EWG's 2025 lists, ranked by pesticide residue found in testing. Check ewg.org for the current year.</p>
+      <p class="note" id="lists-note">EWG's 2025 lists, ranked by pesticide residue found in testing. Check ewg.org for the current year.</p>
       <div class="lists">
-        <div><h3>Dirty Dozen: buy organic</h3><ul id="dirty"></ul></div>
-        <div><h3>Clean Fifteen: lower risk</h3><ul id="clean"></ul></div>
+        <div><h3 id="dirty-title">Dirty Dozen: buy organic</h3><ul id="dirty"></ul></div>
+        <div id="clean-wrap"><h3>Clean Fifteen: lower risk</h3><ul id="clean"></ul></div>
       </div>
     </div>
   </section>
 
   <section class="panel" id="panel-usda" role="tabpanel" aria-labelledby="tab-usda" hidden>
+    <div class="panel" data-country="us">
     <div class="panel-head"><h2>Search USDA's organic list</h2><p>Look up a company or certifier by name.</p></div>
     <form id="usda-form">
       <input type="text" id="usda-q" name="usda-q" placeholder="Company or certifier name" autocomplete="off" spellcheck="false" aria-label="Company or certifier name">
@@ -263,6 +280,60 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
       <p class="note" style="margin:0">This searches USDA's list of organic operations by business name. It lists companies and farms, not products or brands, so you decide whether an entry is the company you mean.</p>
       <p class="note" style="margin:0">A brand can be missing because it is certified under a parent company or a contract manufacturer. No result does not mean a product is not organic. On the package, look for the USDA Organic seal and the line "Certified organic by", then search that certifier or the "Distributed by" company here.</p>
       <p class="note" style="margin:0" id="usda-date">Source: USDA Organic INTEGRITY Database, monthly snapshot. For the latest status, check <a href="https://organic.ams.usda.gov/integrity/" target="_blank" rel="noopener">the USDA site</a>.</p>
+    </div>
+    </div>
+    <div class="panel" data-country="in" hidden>
+      <div class="panel-head"><h2>Search India's organic registry</h2><p>See whether a company appears in FSSAI's Jaivik Bharat organic list.</p></div>
+      <form id="in-form">
+        <input type="text" id="in-q" name="in-q" placeholder="Company name from the pack" autocomplete="off" spellcheck="false" aria-label="Company name">
+        <button class="go" type="submit">Search</button>
+      </form>
+      <div class="chips"><span>Try:</span>
+        <button class="chip word" type="button" data-in="Organic India">Organic India</button>
+        <button class="chip word" type="button" data-in="Sresta">Sresta (24 Mantra)</button>
+        <button class="chip word" type="button" data-in="Nourish Organic">Nourish Organic</button>
+      </div>
+      <div id="in-out" aria-live="polite"></div>
+      <div class="card">
+        <h2>What to look for on the pack</h2>
+        <p class="note">Organic food in India is certified under one of two systems: NPOP, shown by the India Organic logo, or PGS-India, shown by the PGS-India Organic logo. Certified packs should also carry FSSAI's Jaivik Bharat logo.</p>
+        <p class="note">Search the company named after "Marketed by" or "Manufactured by". The registry matches company names only. It does not show whether a certificate is current, and a missing name does not mean a product is not organic.</p>
+        <p class="note">Source: <a href="https://jaivikbharat.fssai.gov.in/" target="_blank" rel="noopener">Jaivik Bharat, FSSAI</a>.</p>
+      </div>
+    </div>
+
+    <div class="panel" data-country="au" hidden>
+      <div class="panel-head"><h2>Search Australia's organic directory</h2><p>Opens Australian Organic's directory of certified brands and businesses in a new tab.</p></div>
+      <form id="au-form" action="https://austorganic.com/certified-organic-directory/" method="get" target="_blank" rel="noopener">
+        <input type="text" id="au-q" name="company" placeholder="Brand or company name" autocomplete="off" spellcheck="false" aria-label="Brand or company name">
+        <input type="hidden" name="elementor_query" value="location_query">
+        <button class="go" type="submit">Search</button>
+      </form>
+      <div class="card">
+        <h2>What to look for on the pack</h2>
+        <p class="note">Australia has no mandatory standard for organic food sold locally, so the word "organic" on its own is not independently checked. Look for a certifier's logo and certificate number, such as Australian Certified Organic's "Bud".</p>
+        <p class="note">Certifiers approved by the Australian Government for organic exports include Australian Certified Organic (ACO), Bio-Dynamic Research Institute (BDRI), Organic Food Chain (OFC) and Southern Cross Certified (SXC).</p>
+        <p class="note">The directory lists businesses that chose to be included, so a missing name does not mean a product is not certified. Source: <a href="https://www.agriculture.gov.au/about/contactus/approved-certifying-organisations" target="_blank" rel="noopener">Department of Agriculture</a>.</p>
+      </div>
+    </div>
+
+    <div class="panel" data-country="gb" hidden>
+      <div class="panel-head"><h2>Check the certifier code</h2><p>Every organic product sold in the UK must print the code of the body that certified it, like <span style="white-space:nowrap">GB-ORG-05</span>.</p></div>
+      <form id="gb-form">
+        <input type="text" id="gb-q" name="gb-q" placeholder="Code on the pack, e.g. GB-ORG-05" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Certifier code">
+        <button class="go" type="submit">Check</button>
+      </form>
+      <div class="chips"><span>Try:</span>
+        <button class="chip" type="button" data-gb="GB-ORG-05">GB-ORG-05</button>
+        <button class="chip" type="button" data-gb="GB-ORG-02">GB-ORG-02</button>
+        <button class="chip" type="button" data-gb="DE-ÖKO-006">DE-ÖKO-006</button>
+      </div>
+      <div id="gb-out" aria-live="polite"></div>
+      <div class="card">
+        <h2>Approved UK certifiers</h2>
+        <div class="codes" id="gb-list"></div>
+        <p class="note">Source: <a href="https://www.gov.uk/guidance/organic-food-uk-approved-control-bodies" target="_blank" rel="noopener">GOV.UK approved control bodies</a>. Products from the EU show codes like DE-ÖKO-006 or FR-BIO-01.</p>
+      </div>
     </div>
   </section>
   </main>
@@ -297,8 +368,6 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
     try { n.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" }); } catch (e) {}
   }
 
-  DIRTY.forEach(function (t) { $("dirty").appendChild(el("li", "", t)); });
-  CLEAN.forEach(function (t) { $("clean").appendChild(el("li", "", t)); });
 
   /* Tabs */
   var TABS = ["food", "produce", "usda"];
@@ -310,7 +379,7 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
       $("panel-" + k).hidden = !on;
     });
     if (!keepHash) {
-      try { history.replaceState(null, "", which === "food" ? location.pathname + location.search : "#" + which); } catch (e) {}
+      try { history.replaceState(null, "", location.pathname + location.search + (which === "food" ? "" : "#" + (which === "usda" ? "verify" : which))); } catch (e) {}
     }
   }
   TABS.forEach(function (k) { $("tab-" + k).addEventListener("click", function () { selectTab(k); }); });
@@ -323,7 +392,7 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
     selectTab(TABS[n]);
     $("tab-" + TABS[n]).focus();
   });
-  function tabFromHash() { var h = location.hash.slice(1); selectTab(TABS.indexOf(h) !== -1 ? h : "food", true); }
+  function tabFromHash() { var h = location.hash.slice(1); if (h === "verify") h = "usda"; selectTab(TABS.indexOf(h) !== -1 ? h : "food", true); }
   window.addEventListener("hashchange", tabFromHash);
   tabFromHash();
 
@@ -375,19 +444,32 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
     card.appendChild(facts);
 
     if (organic.length) {
-      card.appendChild(el("p", "note", "Labels recorded: " + organic.map(function (t) { return t.replace(/^[a-z]{2}:/, "").replace(/-/g, " "); }).join(", ") + "."));
+      var shown = tags.filter(function (t) { return /organic|bio|jaivik/.test(t) && t !== "en:organic"; });
+      if (!shown.length) shown = organic;
+      card.appendChild(el("p", "note", "Labels recorded: " + shown.map(function (t) { return t.replace(/^[a-z]{2}:/, "").replace(/-/g, " "); }).join(", ") + "."));
     }
     if (p.ingredients_text) card.appendChild(el("p", "ing", "Ingredients: " + p.ingredients_text));
 
     var companies = [(p.brand_owner || "").trim()].concat((p.brands || "").split(",").map(function (x) { return x.trim(); }).slice(0, 2)).filter(Boolean);
-    if (companies.length) {
-      var go = el("button", "linkish", "Look up this company in the USDA list");
-      go.type = "button";
-      go.addEventListener("click", function () {
-        selectTab("usda");
-        usdaSearch(companies);
-        window.scrollTo(0, 0);
-      });
+    if (companies.length || country === "gb") {
+      var go;
+      if (country === "au") {
+        go = el("a", "linkish", "Search this company in Australia's organic directory");
+        go.href = "https://austorganic.com/certified-organic-directory/?elementor_query=location_query&company=" + encodeURIComponent(companies[0]);
+        go.target = "_blank";
+        go.rel = "noopener";
+        go.style.textDecoration = "none";
+      } else {
+        go = el("button", "linkish", country === "in" ? "Look up this company in India's organic registry" : country === "gb" ? "Check the certifier code on the pack" : "Look up this company in the USDA list");
+        go.type = "button";
+        go.addEventListener("click", function () {
+          selectTab("usda");
+          window.scrollTo(0, 0);
+          if (country === "in") inSearch(companies[0]);
+          else if (country === "gb") $("gb-q").focus();
+          else usdaSearch(companies);
+        });
+      }
       card.appendChild(go);
     }
 
@@ -740,10 +822,19 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
 
   var NOT_THESE_RE = /sugar apple|custard apple|cactus pear|prickly pear|water spinach|strawberry corn/i;
 
+  var UK_DIRTY_RE = /\b(grapefruits?|grapes?|limes?|bananas?|peppers?|melons?|cantaloupe|honeydew|beans?|chil(l)?i(es)?|mushrooms?|broccoli|aubergines?|eggplants?)\b/i;
+
   function pesticideFlag(name, organic) {
     if (NOT_THESE_RE.test(name)) return null;
-    var group = DIRTY_RE.test(name) ? "high" : (CLEAN_RE.test(name) ? "low" : "");
+    var uk = country === "gb";
+    var group = uk ? (UK_DIRTY_RE.test(name) ? "high" : "") : (DIRTY_RE.test(name) ? "high" : (CLEAN_RE.test(name) ? "low" : ""));
     if (!group) return null;
+    if (uk) {
+      var ukbox = el("div", "flag high");
+      ukbox.appendChild(el("strong", "", organic ? "UK Dirty Dozen item, bought organic" : "UK Dirty Dozen: worth buying organic"));
+      ukbox.appendChild(el("span", "", "UK government tests often find residues of more than one pesticide on conventional versions of this item (PAN UK's list)."));
+      return ukbox;
+    }
     var box = el("div", "flag " + group);
     if (organic) {
       box.appendChild(el("strong", "", group === "high" ? "Dirty Dozen item, bought organic" : "Clean Fifteen item, bought organic"));
@@ -759,6 +850,206 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
     }
     return box;
   }
+
+  /* Country: picks the examples, the third tab and the produce advice */
+  var EWG_NOTE = "EWG's 2025 lists, ranked by pesticide residue found in testing. Check ewg.org for the current year.";
+  var UK_DIRTY = ["Grapefruit", "Grapes", "Limes", "Bananas", "Sweet peppers", "Melons", "Beans", "Chilli peppers", "Mushrooms", "Broccoli", "Aubergines", "Dried beans"];
+  var COUNTRIES = {
+    us: { tab: "USDA list", examples: [["0013764027053", "Dave's Killer Bread"], ["0024000163084", "Del Monte peas"]],
+      note: "Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To look for the company in USDA's certified list, use the USDA list tab." },
+    in: { tab: "India list", examples: [["8904109449239", "Patanjali Honey"], ["8901058851298", "Maggi Masala"]],
+      note: "Data comes from Open Food Facts, which has few Indian products so far, so a missing label often means nobody has entered it yet. You can add a missing product with the free Open Food Facts app. To check a company, use the India list tab.",
+      plu: "In India, stickers mostly appear on imported fruit. Most loose produce has none.",
+      lists: "There is no Indian list here yet, so this shows EWG's 2025 US lists. Residues on produce grown in India may differ." },
+    au: { tab: "Directory", examples: [["9300633227272", "Macro chickpeas"], ["9312336049013", "Bonsoy"]],
+      note: "Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To find a certified business, use the Directory tab.",
+      plu: "Not every shop uses these stickers, especially on loose or local produce.",
+      lists: "There is no Australian list here yet, so this shows EWG's 2025 US lists. Residues on Australian produce may differ." },
+    gb: { tab: "UK codes", examples: [["7622210578464", "Green & Black's 70%"], ["5013665100065", "Kallø rice cakes"]],
+      note: "Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To check the certifier code printed on the pack, use the UK codes tab.",
+      plu: "Not every shop uses these stickers, especially on loose or local produce.",
+      lists: "PAN UK's 2024 Dirty Dozen, based on UK government tests that found residues of more than one pesticide. See pan-uk.org for the latest list.", dirty: UK_DIRTY, dirtyTitle: "UK Dirty Dozen: buy organic", noClean: true }
+  };
+  var country = "us";
+
+  function detectCountry() {
+    var m = /[?&]c=(us|in|au|gb)\b/.exec(location.search);
+    if (m) return m[1];
+    try { var saved = localStorage.getItem("oc-country"); if (COUNTRIES[saved]) return saved; } catch (e) {}
+    var tz = "";
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+    if (/^Asia\/(Kolkata|Calcutta)$/.test(tz)) return "in";
+    if (/^Australia\//.test(tz)) return "au";
+    if (/^Europe\/(London|Belfast|Guernsey|Jersey|Isle_of_Man)$/.test(tz)) return "gb";
+    var langs = navigator.languages || [navigator.language || ""];
+    for (var i = 0; i < langs.length; i++) {
+      var r = (langs[i] || "").split("-")[1];
+      if (r === "IN") return "in";
+      if (r === "AU") return "au";
+      if (r === "GB") return "gb";
+      if (r === "US") return "us";
+    }
+    return "us";
+  }
+
+  function fillList(id, items) {
+    var ul = $(id);
+    ul.textContent = "";
+    items.forEach(function (t) { ul.appendChild(el("li", "", t)); });
+  }
+
+  function applyCountry(c, save) {
+    if (!COUNTRIES[c]) c = "us";
+    country = c;
+    var cfg = COUNTRIES[c];
+    $("country").value = c;
+    document.documentElement.setAttribute("data-country", c);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-country]"), function (n) {
+      if (n !== document.documentElement) n.hidden = n.getAttribute("data-country") !== c;
+    });
+    $("tab-usda").querySelector("span").textContent = cfg.tab;
+    var ex = $("food-examples");
+    ex.textContent = "";
+    ex.appendChild(el("span", "", "Try an example:"));
+    cfg.examples.forEach(function (pair) {
+      var b = el("button", "chip word", pair[1]);
+      b.type = "button";
+      b.setAttribute("aria-label", "Try " + pair[1] + ", barcode " + pair[0]);
+      b.addEventListener("click", function () { $("q").value = pair[0]; lookupCode(pair[0]); });
+      ex.appendChild(b);
+    });
+    $("food-note").textContent = cfg.note;
+    $("plu-note").hidden = !cfg.plu;
+    $("plu-note").textContent = cfg.plu || "";
+    $("lists-note").textContent = cfg.lists || EWG_NOTE;
+    $("dirty-title").textContent = cfg.dirtyTitle || "Dirty Dozen: buy organic";
+    fillList("dirty", cfg.dirty || DIRTY);
+    fillList("clean", CLEAN);
+    $("clean-wrap").hidden = !!cfg.noClean;
+    if (save) {
+      try { localStorage.setItem("oc-country", c); } catch (e) {}
+      try { history.replaceState(null, "", location.pathname + "?c=" + c + location.hash); } catch (e) {}
+    }
+  }
+
+  $("country").addEventListener("change", function () {
+    applyCountry(this.value, true);
+    $("out").textContent = "";
+    $("plu-out").textContent = "";
+  });
+
+  /* India: company names in FSSAI's Jaivik Bharat registry, through our server */
+  function inSearch(q) {
+    q = (q || "").trim();
+    $("in-q").value = q;
+    var out = $("in-out");
+    out.textContent = "";
+    if (q.length < 2) { out.appendChild(el("p", "err", "Type at least 2 letters of a company name.")); return; }
+    out.appendChild(el("p", "note", "Searching the Jaivik Bharat registry…"));
+    fetch("/api/in-company?q=" + encodeURIComponent(q)).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (d) {
+      out.textContent = "";
+      var card = el("div", "card");
+      var names = d.names || [];
+      if (!names.length) {
+        card.appendChild(el("h2", "", "No company matched " + q));
+        card.appendChild(el("p", "note", "Try one distinctive word from the company name, or the legal name on the pack, such as the \"Pvt Ltd\" name after \"Marketed by\". A missing name does not mean a product is not organic."));
+      } else {
+        card.appendChild(el("h2", "", names.length === 1 ? "1 name in the registry" : names.length + " names in the registry"));
+        card.appendChild(el("p", "note", "These company names appear in FSSAI's organic registry. Check that one is the company on your pack. The registry does not show whether a certificate is still current."));
+        var list = el("div", "oplist");
+        names.forEach(function (n) {
+          var row = el("div", "op");
+          row.appendChild(el("div", "on", n));
+          row.appendChild(el("span", "pill C", "In registry"));
+          list.appendChild(row);
+        });
+        card.appendChild(list);
+      }
+      out.appendChild(card);
+      reveal(card);
+    }).catch(function () {
+      out.textContent = "";
+      var p = el("p", "err", "The Jaivik Bharat registry did not respond. Try again in a minute, or ");
+      var a = el("a", "", "search on the FSSAI site");
+      a.href = "https://jaivikbharat.fssai.gov.in/";
+      a.target = "_blank";
+      a.rel = "noopener";
+      p.appendChild(a);
+      p.appendChild(document.createTextNode("."));
+      out.appendChild(p);
+    });
+  }
+  $("in-form").addEventListener("submit", function (e) { e.preventDefault(); inSearch($("in-q").value); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-in]"), function (c) {
+    c.addEventListener("click", function () { inSearch(c.dataset.in); });
+  });
+
+  /* UK: certifier codes from GOV.UK's list of approved control bodies */
+  var UK_BODIES = [
+    ["02", "Organic Farmers & Growers", "https://www.ofgorganic.org", true],
+    ["04", "Organic Food Federation", "https://www.orgfoodfed.com", true],
+    ["05", "Soil Association Certification", "https://www.soilassociation.org/certification/", true],
+    ["06", "Biodynamic Association Certification", "https://www.bdcertification.org.uk", false],
+    ["13", "Quality Welsh Food Certification", "https://www.welshorganic.co.uk", false],
+    ["17", "OF&G (Scotland)", "https://www.ofgorganic.org", false]
+  ];
+  var NI_ONLY = [["07", "Irish Organic Association", "https://www.irishorganicassociation.ie"], ["09", "Organic Trust", "https://www.organictrust.ie"]];
+  UK_BODIES.forEach(function (b) {
+    var a = el("a");
+    a.href = b[2]; a.target = "_blank"; a.rel = "noopener";
+    a.appendChild(el("code", "", "GB-ORG-" + b[0]));
+    a.appendChild(el("span", "", b[1]));
+    $("gb-list").appendChild(a);
+  });
+
+  function gbCheck(raw) {
+    var code = (raw || "").toUpperCase().replace(/\s+/g, "").replace(/[‐-―]/g, "-");
+    $("gb-q").value = code;
+    var out = $("gb-out");
+    out.textContent = "";
+    var card = el("div", "card");
+    var m = /^(GB|XI|UK)-?ORG-?0?(\d{1,2})$/.exec(code);
+    var eu = /^([A-Z]{2})-?([A-ZÀ-ſ]{2,4})-?(\d{2,3})$/.exec(code);
+    if (m) {
+      var num = ("0" + m[2]).slice(-2), hit = null;
+      UK_BODIES.forEach(function (b) { if (b[0] === num && (m[1] !== "XI" || b[3])) hit = b; });
+      if (m[1] === "XI") NI_ONLY.forEach(function (b) { if (b[0] === num) hit = b; });
+      if (hit) {
+        var ok = el("div", "flag low");
+        ok.appendChild(el("strong", "", m[1] + "-ORG-" + num + " is an approved UK certifier"));
+        ok.appendChild(el("span", "", hit[1] + (m[1] === "XI" ? " (Northern Ireland)." : ".")));
+        card.appendChild(ok);
+        var a = el("a", "linkish", "Visit " + hit[1]);
+        a.href = hit[2]; a.target = "_blank"; a.rel = "noopener"; a.style.textDecoration = "none";
+        card.appendChild(a);
+      } else {
+        var bad = el("div", "flag high");
+        bad.appendChild(el("strong", "", code + " is not on the current list"));
+        bad.appendChild(el("span", "", "Older packs can show codes of bodies that have stopped certifying. If the pack is new, check the code again or report it to the shop."));
+        card.appendChild(bad);
+      }
+    } else if (eu && eu[1] !== "GB") {
+      var info = el("div", "flag");
+      info.appendChild(el("strong", "", "This looks like an EU organic code"));
+      info.appendChild(el("span", "", "The first two letters are the country where it was certified (" + eu[1] + "). EU organic certificates are listed in the EU's TRACES database."));
+      card.appendChild(info);
+      var t = el("a", "linkish", "Open the EU certificate search");
+      t.href = "https://webgate.ec.europa.eu/tracesnt/directory/publication/organic-operator/index"; t.target = "_blank"; t.rel = "noopener"; t.style.textDecoration = "none";
+      card.appendChild(t);
+    } else {
+      card.appendChild(el("p", "err", "Type the code exactly as printed, for example GB-ORG-05. It usually sits near the ingredients or the address."));
+    }
+    out.appendChild(card);
+  }
+  $("gb-form").addEventListener("submit", function (e) { e.preventDefault(); gbCheck($("gb-q").value); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-gb]"), function (c) {
+    c.addEventListener("click", function () { gbCheck(c.dataset.gb); });
+  });
+
+  applyCountry(detectCountry(), false);
 
   /* Produce stickers */
   $("plu-form").addEventListener("submit", function (e) {
@@ -798,7 +1089,10 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
     card.appendChild(el("div", good ? "sticker" : "sticker no", kind));
 
     var flag = entry ? pesticideFlag(entry[0], good) : null;
-    if (flag) card.appendChild(flag);
+    if (flag) {
+      card.appendChild(flag);
+      if (country === "in" || country === "au") card.appendChild(el("p", "note", "Pesticide grouping is based on US testing by EWG. Results in your country may differ."));
+    }
 
     if (!entry) {
       card.appendChild(el("p", "note", "This code is not in the standard list. Stores can assign their own codes, so check the sticker or ask the produce staff."));
