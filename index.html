@@ -4,20 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Organic Check</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1812" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Scan a barcode or produce sticker to check organic labels, additives and processing level.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* Layout: one narrow column, two tabs (packaged food / fresh produce), results shown as a produce-sticker verdict plus three facts. */
+/* Layout: scanner-first. A deep-green hero holds the big Scan button; results appear below as a verdict banner plus three rated facts. Bottom tab bar on phones, pill tabs on desktop. */
 :root {
-  --bg: #eef2ec;
-  --surface: #ffffff;
-  --ink: #17261c;
-  --muted: #5a6b5f;
-  --line: #d4ddd2;
-  --leaf: #1f6b3a;
-  --sticker: #f6d44a;
-  --sticker-ink: #2b2406;
+  --bg: #f4f1ea; --surface: #ffffff; --ink: #17261c; --muted: #56665b; --line: #ddd8cc;
+  --leaf: #1f6b3a; --leaf-ink: #ffffff;
+  --deep: #17382a; --deep-ink: #eef5ef; --deep-muted: #b0cab8;
+  --sticker: #f6d44a; --sticker-ink: #2b2406;
+  --good: #1f6b3a; --good-bg: #e1f0e4;
+  --mid: #7a5200; --mid-bg: #fbefcf;
+  --bad: #a3301d; --bad-bg: #fbe4df;
   --warn: #a4471f;
   --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
   --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -26,129 +29,207 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #101a13; --surface: #17241b; --ink: #e6eee7; --muted: #9db0a2; --line: #2a3b2f;
-    --leaf: #6fcf8d; --sticker: #f0cb3c; --sticker-ink: #2b2406; --warn: #e48a5c; color-scheme: dark;
+    --bg: #0f1812; --surface: #17241b; --ink: #e8efe9; --muted: #9fb3a5; --line: #2a3b2f;
+    --leaf: #6fcf8d; --leaf-ink: #0f1812; --deep: #1b3d2c; --deep-ink: #eef5ef; --deep-muted: #b3ccba;
+    --good: #7fd69a; --good-bg: #1c3526; --mid: #e8c36a; --mid-bg: #3a3012; --bad: #f0907c; --bad-bg: #3d2019;
+    --warn: #e48a5c; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #101a13; --surface: #17241b; --ink: #e6eee7; --muted: #9db0a2; --line: #2a3b2f;
-  --leaf: #6fcf8d; --sticker: #f0cb3c; --sticker-ink: #2b2406; --warn: #e48a5c; color-scheme: dark;
+  --bg: #0f1812; --surface: #17241b; --ink: #e8efe9; --muted: #9fb3a5; --line: #2a3b2f;
+  --leaf: #6fcf8d; --leaf-ink: #0f1812; --deep: #1b3d2c; --deep-ink: #eef5ef; --deep-muted: #b3ccba;
+  --good: #7fd69a; --good-bg: #1c3526; --mid: #e8c36a; --mid-bg: #3a3012; --bad: #f0907c; --bad-bg: #3d2019;
+  --warn: #e48a5c; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-body); }
-.wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 20px; }
-h1 { font: 800 clamp(2rem, 8vw, 2.8rem)/1 var(--font-display); letter-spacing: -0.02em; margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-body); overscroll-behavior-y: none; }
+button, input, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+svg { flex: none; }
+.skip { position: absolute; left: 12px; top: -48px; z-index: 20; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 600; text-decoration: none; }
+.skip:focus { top: 12px; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) calc(104px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 18px; }
+main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.appbar { display: flex; align-items: center; gap: 10px; }
+.logo { width: 38px; height: 38px; border-radius: 50%; background: var(--deep); display: grid; place-items: center; color: var(--sticker); }
+h1 { font: 800 1.35rem/1 var(--font-display); letter-spacing: -0.01em; margin: 0; }
 h2 { font: 600 1.15rem/1.2 var(--font-display); margin: 0; }
-.sub { color: var(--muted); margin: 6px 0 0; max-width: 46ch; }
-.tabs { display: flex; gap: 8px; }
-.tab { flex: 1; padding: 12px 8px; border: 1.5px solid var(--line); background: transparent; color: var(--ink); border-radius: 10px; font: 600 0.95rem var(--font-body); cursor: pointer; }
-.tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.panel-head { display: flex; flex-direction: column; gap: 4px; }
+.panel-head h2 { font: 800 1.6rem/1.1 var(--font-display); letter-spacing: -0.01em; }
+.panel-head p { margin: 0; color: var(--muted); }
 :focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+.hero :focus-visible { outline-color: var(--sticker); }
+
+/* Tabs: bottom bar on phones */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface); border-top: 1px solid var(--line); padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; padding: 6px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); font: 600 0.74rem var(--font-body); cursor: pointer; }
+.tab svg { width: 24px; height: 24px; }
+.tab[aria-selected="true"] { background: var(--good-bg); color: var(--good); }
+@media (min-width: 720px) {
+  .wrap { padding-bottom: 64px; padding-top: 28px; }
+  .tabs { position: static; display: inline-grid; grid-template-columns: repeat(3, auto); align-self: flex-start; border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+  .tab { flex-direction: row; gap: 8px; min-height: 0; padding: 9px 18px; border-radius: 999px; font-size: 0.92rem; }
+  .tab svg { width: 20px; height: 20px; }
+  .tab[aria-selected="true"] { background: var(--deep); color: var(--deep-ink); }
+}
+
 .panel { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-form { display: flex; gap: 8px; flex-wrap: wrap; }
-input[type="text"] { flex: 1 1 200px; min-width: 0; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: 500 1rem var(--font-mono); }
-button.go, button.alt { padding: 12px 18px; border-radius: 10px; font: 600 0.95rem var(--font-body); cursor: pointer; border: 1.5px solid var(--leaf); }
-button.go { background: var(--leaf); color: var(--bg); }
-button.alt { background: transparent; color: var(--leaf); }
-.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 0.85rem; }
-.chip { padding: 5px 10px; border: 1px dashed var(--line); border-radius: 999px; background: transparent; color: var(--ink); font: 500 0.8rem var(--font-mono); cursor: pointer; }
-#viewfinder { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; max-height: 60vh; }
+
+/* Hero with the big Scan button */
+.hero { background: var(--deep); color: var(--deep-ink); border-radius: 26px; padding: 22px 18px 18px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.hero .eyebrow { margin-bottom: 4px; font: 500 0.72rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--deep-muted); }
+.hero h2 { font: 800 clamp(1.7rem, 7vw, 2.1rem)/1.05 var(--font-display); letter-spacing: -0.015em; color: var(--deep-ink); }
+.hero .lead { text-wrap: pretty; margin: 0; color: var(--deep-muted); font-size: 0.95rem; max-width: 36ch; }
+#scan { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 64px; border: 0; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 1.15rem var(--font-body); cursor: pointer; }
+#scan svg { width: 28px; height: 28px; }
+#photo { align-self: center; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 18px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.35); background: transparent; color: var(--deep-ink); font: 600 0.92rem var(--font-body); cursor: pointer; }
+#photo svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: no-preference) {
+  #scan, #photo, button.go, .tab, .chip { transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease; }
+  #scan:active, button.go:active, #photo:active { transform: scale(0.97); }
+}
+@media (hover: hover) {
+  #scan:hover { background: #fbe06a; }
+  #photo:hover { background: rgba(255, 255, 255, 0.1); }
+  button.go:hover { filter: brightness(1.08); }
+  .tab[aria-selected="false"]:hover { color: var(--ink); }
+  .chip:hover, .results button:hover { background: var(--good-bg); }
+}
+#viewfinder { position: relative; width: 100%; border-radius: 18px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; max-height: 55vh; }
 #viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; }
-#viewfinder .guide { position: absolute; left: 6%; right: 6%; top: 28%; bottom: 28%; border: 3px solid var(--sticker); border-radius: 10px; box-shadow: 0 0 0 999px rgba(0,0,0,0.35); pointer-events: none; }
-#viewfinder #torch { position: absolute; right: 10px; top: 10px; padding: 6px 12px; background: rgba(0,0,0,0.55); color: #fff; border-color: #fff; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+#viewfinder .guide { position: absolute; left: 8%; right: 8%; top: 26%; bottom: 26%; border: 3px solid var(--sticker); border-radius: 14px; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; }
+#viewfinder #torch { position: absolute; right: 10px; top: 10px; min-height: 40px; padding: 6px 14px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; border: 1.5px solid #fff; font: 600 0.85rem var(--font-body); cursor: pointer; }
+.hero .hint { margin: 0; font-size: 0.88rem; color: var(--deep-muted); }
+
+/* Search form */
+form { display: flex; gap: 8px; }
+.search { display: flex; flex-direction: column; gap: 8px; }
+.search label.or { font: 500 0.72rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+input[type="text"] { flex: 1 1 auto; min-width: 0; min-height: 52px; padding: 12px 18px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: 500 1rem var(--font-body); }
+input[type="text"]::placeholder { color: var(--muted); opacity: 0.9; }
+input[type="text"]:focus-visible { border-color: var(--leaf); }
+button.go { flex: none; min-height: 52px; padding: 12px 22px; border-radius: 999px; font: 700 0.98rem var(--font-body); cursor: pointer; border: 0; background: var(--leaf); color: var(--leaf-ink); }
+button.alt { padding: 10px 16px; border-radius: 999px; font: 600 0.92rem var(--font-body); cursor: pointer; border: 1.5px solid var(--leaf); background: transparent; color: var(--leaf); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 0.85rem; }
+.chip { min-height: 36px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: 500 0.8rem var(--font-mono); cursor: pointer; font-variant-numeric: tabular-nums; }
+
+/* Result card */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 16px; min-width: 0; scroll-margin-top: 12px; }
 .prod { display: flex; gap: 14px; align-items: center; }
-.prod img { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid var(--line); }
-.prod .name { font: 600 1.1rem/1.25 var(--font-display); overflow-wrap: anywhere; }
+.prod img { width: 72px; height: 72px; object-fit: contain; border-radius: 12px; background: #fff; border: 1px solid var(--line); flex: none; }
+.prod .name { font: 700 1.2rem/1.2 var(--font-display); overflow-wrap: anywhere; text-wrap: balance; }
 .prod .brand { color: var(--muted); font-size: 0.9rem; }
-.sticker { align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 0.95rem var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; transform: rotate(-1.5deg); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
-.sticker.no { background: transparent; color: var(--warn); border: 2px dashed var(--warn); box-shadow: none; }
-.sticker .plu { font-family: var(--font-mono); font-weight: 500; }
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-.fact { border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
-.fact .k { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-.fact .v { font: 800 1.6rem/1.1 var(--font-display); margin-top: 4px; }
-.fact .d { font-size: 0.85rem; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
-.ing { font-size: 0.88rem; color: var(--muted); overflow-wrap: anywhere; }
-.note { font-size: 0.85rem; color: var(--muted); }
+.sticker { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-radius: 14px; background: var(--good-bg); color: var(--good); font: 700 1rem/1.25 var(--font-body); }
+.sticker::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: currentColor; flex: none; }
+.sticker.no { background: var(--mid-bg); color: var(--mid); border: 0; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fact { border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: 12px; padding: 10px; min-width: 0; }
+.fact[data-tone="good"] { border-top-color: var(--good); }
+.fact[data-tone="mid"] { border-top-color: var(--mid); }
+.fact[data-tone="bad"] { border-top-color: var(--bad); }
+.fact[data-tone="good"] .v { color: var(--good); }
+.fact[data-tone="mid"] .v { color: var(--mid); }
+.fact[data-tone="bad"] .v { color: var(--bad); }
+.fact .k { font: 500 0.64rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.fact .v { font: 800 1.35rem/1.1 var(--font-display); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.fact .d { font-size: 0.78rem; line-height: 1.3; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+.ing { font-size: 0.88rem; color: var(--muted); overflow-wrap: anywhere; margin: 0; }
+.note { font-size: 0.88rem; color: var(--muted); margin: 0; }
 a { color: var(--leaf); }
 .results { display: flex; flex-direction: column; gap: 8px; }
-.results button { text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: 500 0.95rem var(--font-body); cursor: pointer; overflow-wrap: anywhere; }
-.tabs { flex-wrap: wrap; }
-.tab { flex: 1 1 110px; }
-.op { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.results button { text-align: left; min-height: 48px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: 500 0.95rem var(--font-body); cursor: pointer; }
+button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid var(--leaf); background: transparent; color: var(--leaf); font: 600 0.92rem var(--font-body); cursor: pointer; }
+
+/* USDA rows */
+.op { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .op .on { font: 600 1rem/1.25 var(--font-display); overflow-wrap: anywhere; }
 .op .meta { font-size: 0.85rem; color: var(--muted); overflow-wrap: anywhere; }
 .pill { align-self: flex-start; font: 500 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px; border: 1.5px solid var(--line); }
-.pill.C { border-color: var(--leaf); color: var(--leaf); }
-.pill.S, .pill.U, .pill.R { border-color: var(--warn); color: var(--warn); }
+.pill.C { border-color: var(--good); color: var(--good); }
+.pill.S, .pill.U, .pill.R { border-color: var(--bad); color: var(--bad); }
 .oplist { display: flex; flex-direction: column; gap: 8px; }
-button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--leaf); background: transparent; color: var(--leaf); font: 600 0.9rem var(--font-body); cursor: pointer; }
-.lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
-.lists h3 { font: 600 1rem var(--font-display); margin: 0 0 8px; }
-.lists ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
-.pluguide { display: grid; gap: 8px; font-size: 0.92rem; }
+
+/* Produce */
+.lists { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.lists h3 { font: 700 1rem var(--font-display); margin: 0 0 10px; }
+.lists ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.lists li { padding: 5px 12px; border-radius: 999px; font-size: 0.88rem; }
+#dirty li { background: var(--bad-bg); color: var(--bad); }
+#clean li { background: var(--good-bg); color: var(--good); }
+.pluguide { display: grid; gap: 10px; font-size: 0.92rem; }
 .pluguide div { display: flex; gap: 12px; align-items: baseline; }
-.pluguide code { font: 500 0.85rem var(--font-mono); background: var(--bg); padding: 2px 8px; border-radius: 6px; flex: none; }
-.err { color: var(--warn); }
+.pluguide code { font: 500 0.85rem var(--font-mono); background: var(--bg); padding: 2px 8px; border-radius: 8px; flex: none; font-variant-numeric: tabular-nums; }
+.err { color: var(--bad); margin: 0; }
 .plu-head { display: flex; gap: 14px; align-items: center; }
-.plu-head img { width: 96px; height: 96px; object-fit: cover; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); flex: none; }
-.plu-head .name { font: 600 1.2rem/1.2 var(--font-display); overflow-wrap: anywhere; }
+.plu-head img { width: 96px; height: 96px; object-fit: cover; border-radius: 16px; background: var(--bg); border: 1px solid var(--line); flex: none; }
+.plu-head .name { font: 700 1.25rem/1.2 var(--font-display); overflow-wrap: anywhere; }
 .plu-head .code { font: 500 0.85rem var(--font-mono); color: var(--muted); margin-top: 4px; }
-.credit { font-size: 0.75rem; color: var(--muted); }
-.flag { border-radius: 10px; padding: 12px 14px; font-size: 0.92rem; border: 1.5px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
-.flag strong { font: 600 1rem var(--font-display); }
-.flag.high { border-color: var(--warn); }
-.flag.high strong { color: var(--warn); }
-.flag.low { border-color: var(--leaf); }
-.flag.low strong { color: var(--leaf); }
-@media (prefers-reduced-motion: no-preference) { .sticker { transition: transform .2s; } .sticker:hover { transform: rotate(0deg); } }
+.credit { font-size: 0.75rem; color: var(--muted); margin: 0; }
+.flag { border-radius: 14px; padding: 12px 14px; font-size: 0.92rem; border: 1.5px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.flag strong { font: 700 1rem var(--font-display); }
+.flag.high { border-color: var(--bad); background: var(--bad-bg); }
+.flag.high strong { color: var(--bad); }
+.flag.low { border-color: var(--good); background: var(--good-bg); }
+.flag.low strong { color: var(--good); }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>Organic Check</h1>
-    <p class="sub">Scan or type a barcode to see if a packaged food carries an organic label, which additives it has, and how processed it is. Use the produce tab for stickers and pesticide lists.</p>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="appbar">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c3-5 6-8 10-10"/></svg></span>
+    <h1 translate="no">Organic Check</h1>
   </header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-food" aria-selected="true" aria-controls="panel-food">Packaged food</button>
-    <button class="tab" role="tab" id="tab-produce" aria-selected="false" aria-controls="panel-produce">Fresh produce</button>
-    <button class="tab" role="tab" id="tab-usda" aria-selected="false" aria-controls="panel-usda">USDA list</button>
-  </div>
+  <nav class="tabs" role="tablist" id="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-food" aria-selected="true" aria-controls="panel-food"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8" stroke-width="1.6"/></svg><span>Packaged food</span></button>
+    <button class="tab" role="tab" id="tab-produce" aria-selected="false" aria-controls="panel-produce" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c3-5 6-8 10-10"/></svg><span>Fresh produce</span></button>
+    <button class="tab" role="tab" id="tab-usda" aria-selected="false" aria-controls="panel-usda" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>USDA list</span></button>
+  </nav>
 
-  <section class="panel" id="panel-food" role="tabpanel" aria-labelledby="tab-food">
-    <form id="lookup-form">
-      <input type="text" id="q" inputmode="search" placeholder="Barcode or product name" autocomplete="off" aria-label="Barcode or product name">
-      <button class="go" type="submit">Check</button>
-      <button class="alt" type="button" id="scan">Scan</button>
-      <button class="alt" type="button" id="photo">Photo</button>
+  <main id="main">
+  <section class="panel" id="panel-food" role="tabpanel" aria-labelledby="tab-food" tabindex="-1">
+    <div class="hero">
+      <div>
+        <div class="eyebrow">Packaged food</div>
+        <h2>Is it organic?</h2>
+      </div>
+      <p class="lead">Point your camera at a barcode to see the organic label, additives and how processed it is.</p>
+      <button type="button" id="scan"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8" stroke-width="1.6"/></svg><span id="scan-label">Scan barcode</span></button>
+      <div id="viewfinder" hidden>
+        <video id="cam" playsinline muted></video>
+        <div class="guide" aria-hidden="true"></div>
+        <button type="button" id="torch" hidden>Light</button>
+      </div>
+      <p class="hint" id="scan-hint" hidden>Hold the barcode flat, about 15 cm (6 in) from the camera, inside the frame. Tap Stop to cancel.</p>
+      <button type="button" id="photo"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Use a photo instead</span></button>
       <input type="file" id="photo-input" accept="image/*" capture="environment" hidden>
+    </div>
+    <form id="lookup-form" class="search" role="search">
+      <label class="or" for="q">Or type a barcode or name</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="q" name="q" inputmode="search" enterkeyhint="search" placeholder="Barcode or product name" autocomplete="off" spellcheck="false" autocapitalize="off">
+        <button class="go" type="submit">Check</button>
+      </div>
     </form>
-    <div class="chips"><span>Try:</span>
+    <div class="chips"><span>Try an example:</span>
       <button class="chip" data-code="3017620422003">3017620422003</button>
       <button class="chip" data-code="5449000000996">5449000000996</button>
     </div>
-    <div id="viewfinder" hidden>
-      <video id="cam" playsinline muted></video>
-      <div class="guide" aria-hidden="true"></div>
-      <button type="button" id="torch" class="alt" hidden>Light</button>
-    </div>
-    <p class="note" id="scan-hint" hidden>Hold the barcode flat, about 15 cm (6 in) from the camera, inside the frame. Tap Stop to cancel.</p>
     <div id="out" aria-live="polite"></div>
     <p class="note">Data comes from Open Food Facts, which people edit, so a missing organic label can mean it was never entered. To look for the company in USDA's certified list, use the USDA list tab.</p>
   </section>
 
   <section class="panel" id="panel-produce" role="tabpanel" aria-labelledby="tab-produce" hidden>
+    <div class="panel-head"><h2>Read a produce sticker</h2><p>Type the number printed on the sticker to see what it means.</p></div>
     <form id="plu-form">
-      <input type="text" id="plu" inputmode="numeric" maxlength="5" placeholder="Number on the sticker" autocomplete="off" aria-label="PLU number on produce sticker">
+      <input type="text" id="plu" name="plu" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="Number on the sticker" autocomplete="off" spellcheck="false" aria-label="PLU number on produce sticker">
       <button class="go" type="submit">Read sticker</button>
     </form>
     <div id="plu-out" aria-live="polite"></div>
     <div class="card">
-      <h2>Reading a produce sticker</h2>
+      <h2>What the digits mean</h2>
       <div class="pluguide">
         <div><code>4011</code><span>Four digits: grown conventionally.</span></div>
         <div><code>94011</code><span>Five digits starting with 9: organic.</span></div>
@@ -166,8 +247,9 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
   </section>
 
   <section class="panel" id="panel-usda" role="tabpanel" aria-labelledby="tab-usda" hidden>
+    <div class="panel-head"><h2>Search USDA's organic list</h2><p>Look up a company or certifier by name.</p></div>
     <form id="usda-form">
-      <input type="text" id="usda-q" placeholder="Company or certifier name" autocomplete="off" aria-label="Company or certifier name">
+      <input type="text" id="usda-q" name="usda-q" placeholder="Company or certifier name" autocomplete="off" spellcheck="false" aria-label="Company or certifier name">
       <button class="go" type="submit">Search</button>
     </form>
     <div class="chips"><span>Try:</span>
@@ -183,6 +265,7 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
       <p class="note" style="margin:0" id="usda-date">Source: USDA Organic INTEGRITY Database, monthly snapshot. For the latest status, check <a href="https://organic.ams.usda.gov/integrity/" target="_blank" rel="noopener">the USDA site</a>.</p>
     </div>
   </section>
+  </main>
 </div>
 
 <script src="barcode-detector.js"></script>
@@ -209,19 +292,40 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     return n;
   }
 
+  function reveal(n) {
+    var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    try { n.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" }); } catch (e) {}
+  }
+
   DIRTY.forEach(function (t) { $("dirty").appendChild(el("li", "", t)); });
   CLEAN.forEach(function (t) { $("clean").appendChild(el("li", "", t)); });
 
   /* Tabs */
-  function selectTab(which) {
-    ["food", "produce", "usda"].forEach(function (k) {
-      $("tab-" + k).setAttribute("aria-selected", String(k === which));
-      $("panel-" + k).hidden = k !== which;
+  var TABS = ["food", "produce", "usda"];
+  function selectTab(which, keepHash) {
+    TABS.forEach(function (k) {
+      var on = k === which;
+      $("tab-" + k).setAttribute("aria-selected", String(on));
+      $("tab-" + k).tabIndex = on ? 0 : -1;
+      $("panel-" + k).hidden = !on;
     });
+    if (!keepHash) {
+      try { history.replaceState(null, "", which === "food" ? location.pathname + location.search : "#" + which); } catch (e) {}
+    }
   }
-  $("tab-food").addEventListener("click", function () { selectTab("food"); });
-  $("tab-produce").addEventListener("click", function () { selectTab("produce"); });
-  $("tab-usda").addEventListener("click", function () { selectTab("usda"); });
+  TABS.forEach(function (k) { $("tab-" + k).addEventListener("click", function () { selectTab(k); }); });
+  $("tablist").addEventListener("keydown", function (e) {
+    var i = TABS.indexOf(document.activeElement && document.activeElement.id.replace("tab-", ""));
+    if (i === -1) return;
+    var n = e.key === "ArrowRight" ? (i + 1) % TABS.length : e.key === "ArrowLeft" ? (i + TABS.length - 1) % TABS.length : e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : -1;
+    if (n === -1) return;
+    e.preventDefault();
+    selectTab(TABS[n]);
+    $("tab-" + TABS[n]).focus();
+  });
+  function tabFromHash() { var h = location.hash.slice(1); selectTab(TABS.indexOf(h) !== -1 ? h : "food", true); }
+  window.addEventListener("hashchange", tabFromHash);
+  tabFromHash();
 
   /* Packaged food */
   function showMessage(text, isErr) {
@@ -230,8 +334,9 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     out.appendChild(el("p", isErr ? "err" : "note", text));
   }
 
-  function fact(k, v, d) {
+  function fact(k, v, d, tone) {
     var f = el("div", "fact");
+    if (tone) f.setAttribute("data-tone", tone);
     f.appendChild(el("div", "k", k));
     f.appendChild(el("div", "v", v));
     if (d) f.appendChild(el("div", "d", d));
@@ -261,9 +366,12 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     card.appendChild(st);
 
     var facts = el("div", "facts");
-    facts.appendChild(fact("Additives", String(additives.length), additives.length ? additives.join(", ") : "None listed"));
-    facts.appendChild(fact("Processing", p.nova_group ? "NOVA " + p.nova_group : "Unknown", p.nova_group ? NOVA[p.nova_group] : "Not enough data to rate"));
-    facts.appendChild(fact("Nutri-Score", p.nutriscore_grade ? p.nutriscore_grade.toUpperCase() : "n/a", "A is best, E is worst"));
+    var nova = Number(p.nova_group) || 0, grade = (p.nutriscore_grade || "").toLowerCase();
+    var novaTone = nova === 1 || nova === 2 ? "good" : nova === 3 ? "mid" : nova === 4 ? "bad" : "";
+    var gradeTone = grade === "a" || grade === "b" ? "good" : grade === "c" ? "mid" : grade === "d" || grade === "e" ? "bad" : "";
+    facts.appendChild(fact("Additives", String(additives.length), additives.length ? additives.join(", ") : "None listed", additives.length ? "" : "good"));
+    facts.appendChild(fact("Processing", p.nova_group ? "NOVA " + p.nova_group : "Unknown", p.nova_group ? NOVA[p.nova_group] : "Not enough data to rate", novaTone));
+    facts.appendChild(fact("Nutri-Score", p.nutriscore_grade ? p.nutriscore_grade.toUpperCase() : "n/a", "A is best, E is worst", gradeTone));
     card.appendChild(facts);
 
     if (organic.length) {
@@ -286,10 +394,11 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     var out = $("out");
     out.textContent = "";
     out.appendChild(card);
+    reveal(card);
   }
 
   function lookupCode(code) {
-    showMessage("Looking up " + code + "...");
+    showMessage("Looking up " + code + "\u2026");
     var fields = "code,product_name,brands,brand_owner,labels_tags,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url";
     fetch(API + "/api/v2/product/" + encodeURIComponent(code) + ".json?fields=" + fields)
       .then(function (r) { return r.json(); })
@@ -324,7 +433,7 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
   }
 
   function searchName(q) {
-    showMessage("Searching for " + q + "...");
+    showMessage("Searching for " + q + "\u2026");
     var enc = encodeURIComponent(q);
     var primary = "https://search.openfoodfacts.org/search?q=" + enc + "&page_size=8&fields=code,product_name,brands";
     var backup = API + "/cgi/search.pl?search_terms=" + enc + "&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,brands";
@@ -357,7 +466,7 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     if (/^\d{8,14}$/.test(q)) lookupCode(q); else searchName(q);
   });
 
-  Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (c) {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-code]"), function (c) {
     c.addEventListener("click", function () { $("q").value = c.dataset.code; lookupCode(c.dataset.code); });
   });
 
@@ -405,7 +514,7 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     $("viewfinder").hidden = true;
     $("scan-hint").hidden = true;
     $("torch").hidden = true;
-    $("scan").textContent = "Scan";
+    $("scan-label").textContent = "Scan barcode";
   }
 
   function foundCode(code) {
@@ -448,9 +557,9 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
       return;
     }
     scanning = true;
-    $("scan").textContent = "Stop";
+    $("scan-label").textContent = "Stop";
     $("out").textContent = "";
-    showMessage("Starting the camera...");
+    showMessage("Starting the camera\u2026");
     getDetector().then(function () { return openCamera(); }).then(function (s) {
       if (!scanning) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
       stream = s;
@@ -500,7 +609,7 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     this.value = "";
     if (!f) return;
     if (scanning) stopScan();
-    showMessage("Reading the barcode...");
+    showMessage("Reading the barcode\u2026");
     getDetector().then(function () { return readPhoto(f); }).then(function (code) {
       if (code) foundCode(code);
       else showMessage("Could not read a barcode in that photo. Fill the frame with the barcode, keep it sharp and flat, and try again.", true);
@@ -613,7 +722,7 @@ button.linkish { align-self: flex-start; padding: 10px 14px; border-radius: 10px
     var out = $("usda-out");
     out.textContent = "";
     if (!queries.length) { out.appendChild(el("p", "err", "Type at least 2 letters of a company or certifier name.")); return; }
-    out.appendChild(el("p", "note", "Loading the USDA list..."));
+    out.appendChild(el("p", "note", "Loading the USDA list\u2026"));
     loadUsda().then(function () { buildIndex(); usdaRender(queries); }).catch(function () {
       out.textContent = "";
       out.appendChild(el("p", "err", "The USDA list did not load. Check your connection and tap Search again."));
