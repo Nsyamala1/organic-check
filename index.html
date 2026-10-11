@@ -72,13 +72,13 @@ h2 { font: 600 1.15rem/1.2 var(--font-display); margin: 0; }
 .hero :focus-visible { outline-color: var(--sticker); }
 
 /* Tabs: bottom bar on phones */
-.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface); border-top: 1px solid var(--line); padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--surface); border-top: 1px solid var(--line); padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
 .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; padding: 6px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); font: 600 0.74rem var(--font-body); cursor: pointer; }
 .tab svg { width: 24px; height: 24px; }
 .tab[aria-selected="true"] { background: var(--good-bg); color: var(--good); }
 @media (min-width: 720px) {
   .wrap { padding-bottom: 64px; padding-top: 28px; }
-  .tabs { position: static; display: inline-grid; grid-template-columns: repeat(3, auto); align-self: flex-start; border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+  .tabs { position: static; display: inline-grid; grid-template-columns: repeat(4, auto); align-self: flex-start; border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
   .tab { flex-direction: row; gap: 8px; min-height: 0; padding: 9px 18px; border-radius: 999px; font-size: 0.92rem; }
   .tab svg { width: 20px; height: 20px; }
   .tab[aria-selected="true"] { background: var(--deep); color: var(--deep-ink); }
@@ -93,15 +93,17 @@ h2 { font: 600 1.15rem/1.2 var(--font-display); margin: 0; }
 .hero .lead { text-wrap: pretty; margin: 0; color: var(--deep-muted); font-size: 0.95rem; max-width: 36ch; }
 #scan { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 64px; border: 0; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 1.15rem var(--font-body); cursor: pointer; }
 #scan svg { width: 28px; height: 28px; }
-#photo { align-self: center; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 18px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.35); background: transparent; color: var(--deep-ink); font: 600 0.92rem var(--font-body); cursor: pointer; }
+#photo, .photo-alt { align-self: center; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 18px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.35); background: transparent; color: var(--deep-ink); font: 600 0.92rem var(--font-body); cursor: pointer; }
 #photo svg { width: 18px; height: 18px; }
+#menu-scan { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 64px; border: 0; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 1.1rem var(--font-body); cursor: pointer; }
 @media (prefers-reduced-motion: no-preference) {
-  #scan, #photo, button.go, .tab, .chip { transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease; }
-  #scan:active, button.go:active, #photo:active { transform: scale(0.97); }
+  #scan, #menu-scan, #photo, .photo-alt, button.go, .tab, .chip { transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease; }
+  #scan:active, #menu-scan:active, button.go:active, #photo:active, .photo-alt:active { transform: scale(0.97); }
 }
 @media (hover: hover) {
   #scan:hover { background: #fbe06a; }
-  #photo:hover { background: rgba(255, 255, 255, 0.1); }
+  #photo:hover, .photo-alt:hover { background: rgba(255, 255, 255, 0.1); }
+  #menu-scan:hover { background: #fbe06a; }
   button.go:hover { filter: brightness(1.08); }
   .tab[aria-selected="false"]:hover { color: var(--ink); }
   .chip:hover, .results button:hover { background: var(--good-bg); }
@@ -187,6 +189,38 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
 .flag.high strong { color: var(--bad); }
 .flag.low { border-color: var(--good); background: var(--good-bg); }
 .flag.low strong { color: var(--good); }
+
+/* Menu reader */
+.lang { display: flex; align-items: center; gap: 8px; color: var(--deep-muted); font-size: 0.88rem; }
+.lang select { appearance: none; -webkit-appearance: none; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.35); background-color: var(--deep); color: var(--deep-ink); font: 600 0.88rem var(--font-body); cursor: pointer; }
+.lang select option { background-color: var(--surface); color: var(--ink); }
+#menu-preview { width: 100%; max-height: 220px; object-fit: cover; object-position: top; border-radius: 16px; display: block; border: 1px solid var(--line); }
+.menu-head { display: flex; flex-direction: column; gap: 4px; }
+.menu-head h2 { font: 800 1.45rem/1.15 var(--font-display); letter-spacing: -0.01em; }
+.dishes { display: flex; flex-direction: column; gap: 14px; }
+.dish { padding: 0; overflow: hidden; gap: 0; }
+.dish .ph { position: relative; aspect-ratio: 16 / 10; background: var(--bg); display: grid; place-items: center; color: var(--muted); font-size: 0.88rem; text-align: center; }
+.dish .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dish .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.dish .cap { font-size: 0.75rem; color: var(--muted); margin: 0; }
+.dish .top { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.dish .orig { font: 500 0.82rem var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+.dish .en { font: 700 1.2rem/1.2 var(--font-display); overflow-wrap: anywhere; text-wrap: balance; }
+.dish .price { font: 600 0.95rem var(--font-mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dish p { margin: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+.tag.kcal { font-variant-numeric: tabular-nums; }
+.tag.veg { background: var(--good-bg); color: var(--good); border-color: transparent; }
+.tag.hot { background: var(--bad-bg); color: var(--bad); border-color: transparent; }
+.tag.unsure { background: var(--mid-bg); color: var(--mid); border-color: transparent; }
+.allergy { font-size: 0.88rem; color: var(--ink); }
+.dish .more { font-size: 0.85rem; }
+.filters .chip[aria-pressed="true"] { background: var(--deep); color: var(--deep-ink); border-color: var(--deep); }
+.skel { height: 260px; border-radius: 20px; background: linear-gradient(90deg, var(--surface) 0%, var(--line) 50%, var(--surface) 100%); background-size: 200% 100%; border: 1px solid var(--line); }
+@media (prefers-reduced-motion: no-preference) { .skel { animation: shimmer 1.4s ease-in-out infinite; } }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (min-width: 720px) { .dishes { display: grid; grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -209,6 +243,7 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
     <button class="tab" role="tab" id="tab-food" aria-selected="true" aria-controls="panel-food"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8" stroke-width="1.6"/></svg><span>Packaged food</span></button>
     <button class="tab" role="tab" id="tab-produce" aria-selected="false" aria-controls="panel-produce" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c3-5 6-8 10-10"/></svg><span>Fresh produce</span></button>
     <button class="tab" role="tab" id="tab-usda" aria-selected="false" aria-controls="panel-usda" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>USDA list</span></button>
+    <button class="tab" role="tab" id="tab-menu" aria-selected="false" aria-controls="panel-menu" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Menu</span></button>
   </nav>
 
   <main id="main">
@@ -343,6 +378,27 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
       </div>
     </div>
   </section>
+  <section class="panel" id="panel-menu" role="tabpanel" aria-labelledby="tab-menu" hidden>
+    <div class="hero">
+      <div>
+        <h2>Read any menu</h2>
+        <p class="lead">Take a photo of a menu in any language to see what each dish is, how it looks and roughly how many calories it has.</p>
+      </div>
+      <button type="button" id="menu-scan"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Photograph a menu</span></button>
+      <input type="file" id="menu-cam" accept="image/*" capture="environment" hidden>
+      <input type="file" id="menu-file" accept="image/*" hidden>
+      <button type="button" id="menu-pick" class="photo-alt"><span>Choose a saved photo</span></button>
+      <label class="lang" for="menu-lang">Explain in
+        <select id="menu-lang" name="menu-lang">
+          <option value="en">English</option><option value="hi">Hindi</option><option value="te">Telugu</option><option value="ta">Tamil</option>
+          <option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pt">Portuguese</option>
+          <option value="ja">Japanese</option><option value="zh">Chinese</option><option value="ko">Korean</option><option value="ar">Arabic</option>
+        </select>
+      </label>
+    </div>
+    <div id="menu-out" aria-live="polite"></div>
+    <p class="note">Photos show the classic version of each dish, not this restaurant's plate. Calories are rough ranges for a typical serving. Allergens are guesses from the dish name, so always ask the staff if you have an allergy.</p>
+  </section>
   </main>
 </div>
 
@@ -377,7 +433,7 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
 
 
   /* Tabs */
-  var TABS = ["food", "produce", "usda"];
+  var TABS = ["food", "produce", "usda", "menu"];
   function selectTab(which, keepHash) {
     TABS.forEach(function (k) {
       var on = k === which;
@@ -1164,6 +1220,194 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
     if (photo) card.appendChild(el("p", "credit", "Photo from Wikipedia, for illustration. Your item may look different."));
     out.appendChild(card);
   });
+  /* Menu reader: photo -> /api/read-menu (vision model) -> dish cards with Wikipedia photos */
+  var LANG_KEY = "oc-menu-lang";
+  (function () {
+    var sel = $("menu-lang"), saved = "";
+    try { saved = localStorage.getItem(LANG_KEY) || ""; } catch (e) {}
+    var guess = saved || (navigator.language || "en").slice(0, 2).toLowerCase();
+    if (sel.querySelector('option[value="' + guess + '"]')) sel.value = guess;
+    sel.addEventListener("change", function () { try { localStorage.setItem(LANG_KEY, sel.value); } catch (e) {} });
+  })();
+  $("menu-scan").addEventListener("click", function () { $("menu-cam").click(); });
+  $("menu-pick").addEventListener("click", function () { $("menu-file").click(); });
+  ["menu-cam", "menu-file"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var file = this.files && this.files[0];
+      this.value = "";
+      if (file) readMenu(file);
+    });
+  });
+
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var max = 1600, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement("canvas");
+        c.width = Math.round(w * k); c.height = Math.round(h * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+
+  function menuError(text) {
+    var out = $("menu-out");
+    out.textContent = "";
+    out.appendChild(el("p", "err", text));
+  }
+
+  function readMenu(file) {
+    var out = $("menu-out");
+    out.textContent = "";
+    out.appendChild(el("p", "note", "Reading the menu\u2026 This usually takes 10 to 30 seconds."));
+    for (var i = 0; i < 3; i++) out.appendChild(el("div", "skel"));
+    out.scrollIntoView({ block: "start" });
+    shrink(file).then(function (dataUrl) {
+      var pv = el("img");
+      pv.id = "menu-preview"; pv.src = dataUrl; pv.alt = "Your menu photo";
+      out.insertBefore(pv, out.firstChild);
+      return fetch("/api/read-menu", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl, lang: $("menu-lang").value }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._status = r.status; return d; }); })
+        .then(function (d) { showMenu(d, dataUrl); });
+    }).catch(function (e) {
+      menuError(e && e.message === "decode" ? "That photo could not be opened. Try a JPEG or PNG photo." : "Could not reach the server. Check your connection and try again.");
+    });
+  }
+
+  var SPICE = ["Not spicy", "Mild", "Medium spicy", "Hot"];
+
+  function showMenu(d, dataUrl) {
+    var out = $("menu-out");
+    if (d._status === 503) return menuError("Menu reading is not switched on yet. The app owner needs to add an API key.");
+    if (d._status === 429) return menuError(d.message || "You have reached today's limit for menu scans. Try again tomorrow.");
+    if (d._status === 413) return menuError("That photo is too large. Try a smaller photo.");
+    if (d._status !== 200) return menuError("The menu could not be read right now. Wait a moment and try again.");
+    out.textContent = "";
+    var pv = el("img");
+    pv.id = "menu-preview"; pv.src = dataUrl; pv.alt = "Your menu photo";
+    out.appendChild(pv);
+    var dishes = (d.dishes || []).filter(function (x) { return x && (x.english || x.original); });
+    if (!d.is_menu || !dishes.length) {
+      out.appendChild(el("p", "err", d.is_menu === false ? "This does not look like a menu. Take a closer, straight-on photo of the dish list." : "No dishes could be read. Try a sharper photo with good light, one page at a time."));
+      return;
+    }
+    var head = el("div", "menu-head");
+    head.appendChild(el("h2", "", dishes.length + (dishes.length === 1 ? " dish found" : " dishes found")));
+    var bits = [];
+    if (d.cuisine) bits.push(d.cuisine + " food");
+    if (d.menu_language) bits.push("menu in " + d.menu_language);
+    if (bits.length) head.appendChild(el("p", "note", bits.join(", ") + "."));
+    out.appendChild(head);
+
+    var filters = el("div", "chips filters");
+    var list = el("div", "dishes");
+    var cards = [];
+    [["all", "All"], ["veg", "Vegetarian"], ["mild", "Not spicy"]].forEach(function (f, i) {
+      var b = el("button", "chip word", f[1]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+      b.addEventListener("click", function () {
+        Array.prototype.forEach.call(filters.children, function (c) { c.setAttribute("aria-pressed", String(c === b)); });
+        cards.forEach(function (c) {
+          var x = c.dish;
+          c.node.hidden = f[0] === "veg" ? !(x.vegetarian || x.vegan) : f[0] === "mild" ? Number(x.spice) > 0 : false;
+        });
+      });
+      filters.appendChild(b);
+    });
+    out.appendChild(filters);
+    dishes.forEach(function (x) { var n = dishCard(x); cards.push({ dish: x, node: n }); list.appendChild(n); });
+    out.appendChild(list);
+    queuePhotos(cards);
+  }
+
+  function dishCard(x) {
+    var card = el("article", "card dish");
+    var ph = el("div", "ph", "Looking for a photo…");
+    card.appendChild(ph);
+    var body = el("div", "body");
+    var cap = el("p", "cap");
+    body.appendChild(cap);
+    var top = el("div", "top");
+    var names = el("div");
+    if (x.original && x.original !== x.english) names.appendChild(el("div", "orig", x.original));
+    names.appendChild(el("div", "en", x.english || x.original));
+    top.appendChild(names);
+    if (x.price) top.appendChild(el("div", "price", String(x.price)));
+    body.appendChild(top);
+    if (x.what_it_is) body.appendChild(el("p", "", x.what_it_is));
+    var tags = el("div", "tags");
+    var lo = Number(x.kcal_low), hi = Number(x.kcal_high);
+    if (lo > 0 && hi >= lo) tags.appendChild(el("span", "tag kcal", "About " + lo + "-" + hi + " kcal"));
+    var sp = Math.max(0, Math.min(3, Number(x.spice) || 0));
+    tags.appendChild(el("span", sp >= 2 ? "tag hot" : "tag", SPICE[sp]));
+    if (x.vegan) tags.appendChild(el("span", "tag veg", "Vegan"));
+    else if (x.vegetarian) tags.appendChild(el("span", "tag veg", "Vegetarian"));
+    if (x.confidence === "low") tags.appendChild(el("span", "tag unsure", "Not sure about this one"));
+    body.appendChild(tags);
+    if (x.main_ingredients && x.main_ingredients.length) body.appendChild(el("p", "note", "Main ingredients: " + x.main_ingredients.join(", ") + "."));
+    if (x.allergens && x.allergens.length) body.appendChild(el("p", "allergy", "May contain " + x.allergens.join(", ") + ". Ask the staff to be sure."));
+    var more = el("a", "more", "Search more photos");
+    more.href = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent((x.english || "") + " " + (x.original || ""));
+    more.target = "_blank"; more.rel = "noopener";
+    body.appendChild(more);
+    card.appendChild(body);
+    card._ph = ph; card._cap = cap; card._dish = x;
+    return card;
+  }
+
+  var WIKI = "https://en.wikipedia.org";
+  function wikiJson(url) {
+    return fetchJson(url).catch(function () { return new Promise(function (r) { setTimeout(r, 1500); }).then(function () { return fetchJson(url); }); });
+  }
+  function words(s) { return (s || "").toLowerCase().split(/[^a-zÀ-ɏ]+/).filter(function (w) { return w.length >= 4; }); }
+  function findPhoto(x) {
+    var title = (x.wikipedia_title || "").trim();
+    var direct = title ? wikiJson(WIKI + "/api/rest_v1/page/summary/" + encodeURIComponent(title.replace(/ /g, "_"))).then(function (d) {
+      if (d.type === "disambiguation" || !d.thumbnail) return null;
+      return { src: d.thumbnail.source, page: d.content_urls && d.content_urls.desktop.page, title: d.title };
+    }).catch(function () { return null; }) : Promise.resolve(null);
+    return direct.then(function (hit) {
+      if (hit || !x.english) return hit;
+      var url = WIKI + "/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=1&prop=pageimages|info&inprop=url&pithumbsize=640&gsrsearch=" + encodeURIComponent(x.english + " dish");
+      return wikiJson(url).then(function (d) {
+        var pages = d.query && d.query.pages, p = pages && pages[Object.keys(pages)[0]];
+        if (!p || !p.thumbnail) return null;
+        var want = words(x.english), got = words(p.title);
+        if (!want.some(function (w) { return got.indexOf(w) !== -1; })) return null;
+        return { src: p.thumbnail.source, page: p.fullurl, title: p.title };
+      }).catch(function () { return null; });
+    });
+  }
+  function queuePhotos(cards) {
+    var i = 0;
+    function next() {
+      if (i >= cards.length) return;
+      var node = cards[i++].node;
+      findPhoto(node._dish).then(function (hit) {
+        if (hit) {
+          var img = el("img");
+          img.src = hit.src; img.alt = "Typical " + (node._dish.english || hit.title); img.loading = "lazy";
+          img.addEventListener("error", function () { img.remove(); node._ph.firstChild && (node._ph.firstChild.textContent = "No photo found"); });
+          node._ph.textContent = "";
+          node._ph.appendChild(img);
+          node._cap.appendChild(document.createTextNode("Typical look, from "));
+          var a = el("a", "", "Wikipedia: " + hit.title);
+          a.href = hit.page || WIKI; a.target = "_blank"; a.rel = "noopener";
+          node._cap.appendChild(a);
+        } else {
+          node._ph.textContent = "No photo found. Try Search more photos below.";
+          node._cap.remove();
+        }
+      }).then(next);
+    }
+    for (var k = 0; k < 3; k++) next();
+  }
 })();
 </script>
 </body>

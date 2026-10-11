@@ -37,10 +37,72 @@ function inCompany(req, res) {
   up.on("timeout", () => up.destroy(new Error("timeout")));
   up.on("error", () => json(502, { error: "registry unreachable" }));
 }
+
+/* Menu reader: send a menu photo to Claude's vision model and return structured dishes */
+const MENU_MODEL = process.env.MENU_MODEL || "claude-sonnet-5-5";
+const MENU_PER_PERSON = Number(process.env.MENU_DAILY_PER_PERSON) || 15;
+const MENU_TOTAL = Number(process.env.MENU_DAILY_TOTAL) || 300;
+const LANGS = { en: "English", hi: "Hindi", te: "Telugu", ta: "Tamil", es: "Spanish", fr: "French", de: "German", pt: "Portuguese", ja: "Japanese", zh: "Simplified Chinese", ko: "Korean", ar: "Arabic" };
+let menuDay = "", menuCount = 0;
+const menuByIp = new Map();
+const MOCK = { is_menu: true, menu_language: "Japanese", cuisine: "Japanese", dishes: [
+  { original: "お好み焼き", english: "Okonomiyaki", what_it_is: "A savoury pancake of cabbage and batter, topped with sweet sauce, mayonnaise and bonito flakes.", main_ingredients: ["cabbage", "flour", "egg", "pork"], kcal_low: 500, kcal_high: 750, spice: 0, vegetarian: false, vegan: false, allergens: ["wheat", "egg", "fish"], price: "¥900", confidence: "high", wikipedia_title: "Okonomiyaki" },
+  { original: "冷奴", english: "Chilled tofu (hiyayakko)", what_it_is: "Cold silken tofu with grated ginger, spring onion and soy sauce.", main_ingredients: ["tofu", "ginger", "spring onion"], kcal_low: 100, kcal_high: 180, spice: 0, vegetarian: true, vegan: true, allergens: ["soy"], price: "¥400", confidence: "high", wikipedia_title: "Hiyayakko" },
+  { original: "担々麺", english: "Tantanmen", what_it_is: "Ramen in a spicy sesame and chilli broth with minced pork.", main_ingredients: ["noodles", "pork", "sesame", "chilli oil"], kcal_low: 650, kcal_high: 900, spice: 2, vegetarian: false, vegan: false, allergens: ["wheat", "sesame", "soy"], price: "¥1,100", confidence: "medium", wikipedia_title: "Dandan noodles" } ] };
+
+function readMenu(req, res) {
+  const json = (code, obj) => { if (res.headersSent) return; res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }); res.end(JSON.stringify(obj)); };
+  if (req.method !== "POST") return json(405, { error: "POST only" });
+  const mock = process.env.MENU_MOCK === "1";
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key && !mock) return json(503, { error: "not_configured" });
+  const today = new Date().toISOString().slice(0, 10);
+  if (today !== menuDay) { menuDay = today; menuCount = 0; menuByIp.clear(); }
+  const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+  const mine = menuByIp.get(ip) || 0;
+  if (mine >= MENU_PER_PERSON) return json(429, { error: "limit", message: "You have scanned " + MENU_PER_PERSON + " menus today, which is the daily limit. Try again tomorrow." });
+  if (menuCount >= MENU_TOTAL) return json(429, { error: "limit", message: "The app has reached its menu-scan limit for today. Try again tomorrow." });
+  let body = "", size = 0, tooBig = false;
+  req.setEncoding("utf8");
+  req.on("data", (d) => { size += d.length; if (size > 8e6) { tooBig = true; req.destroy(); } else body += d; });
+  req.on("close", () => { if (tooBig) json(413, { error: "too large" }); });
+  req.on("end", async () => {
+    let input;
+    try { input = JSON.parse(body); } catch (e) { return json(400, { error: "bad json" }); }
+    const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(input.image || ""));
+    if (!m) return json(400, { error: "bad image" });
+    const lang = LANGS[input.lang] || "English";
+    menuByIp.set(ip, mine + 1);
+    menuCount++;
+    if (mock) return setTimeout(() => json(200, MOCK), 500);
+    const prompt = "Read every dish on this menu photo. Write all explanations in " + lang + ". Reply with JSON only, in exactly this shape:\n" +
+      '{"is_menu":true,"menu_language":"","cuisine":"","dishes":[{"original":"name exactly as printed, in its original script","english":"common English name","what_it_is":"one or two plain sentences: what it is and how it tastes","main_ingredients":[],"kcal_low":0,"kcal_high":0,"spice":0,"vegetarian":false,"vegan":false,"allergens":[],"price":"as printed, or empty","confidence":"high|medium|low","wikipedia_title":"exact English Wikipedia article title for this dish, or empty"}]}\n' +
+      "Rules: menu_language, cuisine, what_it_is and main_ingredients are written in " + lang + "; english stays in English. kcal_low and kcal_high are a realistic range for one typical serving, not an exact figure. spice: 0 none, 1 mild, 2 medium, 3 hot. allergens only from: milk, egg, fish, shellfish, tree nuts, peanuts, wheat, soy, sesame (in " + lang + "). Use confidence low when the text is hard to read or the dish is ambiguous. Never add dishes that are not on the menu. Skip drinks unless the menu has only drinks. At most 40 dishes. If the photo is not a menu, reply {\"is_menu\":false,\"dishes\":[]}.";
+    try {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        signal: AbortSignal.timeout(90000),
+        headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+        body: JSON.stringify({ model: MENU_MODEL, max_tokens: 8000, system: "You read restaurant menus from photos for travellers. You reply with JSON only.", messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/" + m[1], data: m[2] } }, { type: "text", text: prompt }] }] })
+      });
+      const d = await r.json();
+      if (!r.ok) { console.error("menu api", r.status, JSON.stringify(d).slice(0, 300)); return json(502, { error: "model error" }); }
+      const text = (d.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
+      const a = text.indexOf("{"), b = text.lastIndexOf("}");
+      let out;
+      try { out = JSON.parse(text.slice(a, b + 1)); } catch (e) { console.error("menu parse", text.slice(0, 200)); return json(502, { error: "unreadable reply" }); }
+      json(200, out);
+    } catch (e) {
+      console.error("menu fetch", e.message);
+      json(502, { error: "model unreachable" });
+    }
+  });
+}
 http.createServer((req, res) => {
   let p;
   try { p = decodeURIComponent(req.url.split("?")[0]); } catch (e) { res.writeHead(400); return res.end("Bad request"); }
   if (p === "/api/in-company") return inCompany(req, res);
+  if (p === "/api/read-menu") return readMenu(req, res);
   if (p === "/") p = "/index.html";
   const file = path.join(root, path.normalize(p));
   if (!file.startsWith(root) || file.endsWith("server.js") || file.endsWith("package.json")) { res.writeHead(404); return res.end("Not found"); }
