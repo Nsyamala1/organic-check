@@ -77,7 +77,7 @@ function readMenu(req, res) {
     if (mock) return setTimeout(() => json(200, MOCK), 500);
     const prompt = "Read every dish on this menu photo. Write all explanations in " + lang + ". Reply with JSON only, in exactly this shape:\n" +
       '{"is_menu":true,"menu_language":"","cuisine":"","dishes":[{"original":"name exactly as printed, in its original script","english":"common English name","what_it_is":"one or two plain sentences: what it is and how it tastes","main_ingredients":[],"kcal_low":0,"kcal_high":0,"spice":0,"vegetarian":false,"vegan":false,"allergens":[],"price":"as printed, or empty","confidence":"high|medium|low","wikipedia_title":"exact English Wikipedia article title for this dish, or empty"}]}\n' +
-      "Rules: menu_language, cuisine, what_it_is and main_ingredients are written in " + lang + "; english stays in English. kcal_low and kcal_high are a realistic range for one typical serving, not an exact figure. spice: 0 none, 1 mild, 2 medium, 3 hot. allergens only from: milk, egg, fish, shellfish, tree nuts, peanuts, wheat, soy, sesame (in " + lang + "). Use confidence low when the text is hard to read or the dish is ambiguous. Never add dishes that are not on the menu. Skip drinks unless the menu has only drinks. At most 40 dishes. If the photo is not a menu, reply {\"is_menu\":false,\"dishes\":[]}.";
+      "Rules: what_it_is and main_ingredients are written in " + lang + "; english, menu_language and cuisine stay in English. kcal_low and kcal_high are a realistic range for one typical serving, not an exact figure. spice: 0 none, 1 mild, 2 medium, 3 hot. allergens only from: milk, egg, fish, shellfish, tree nuts, peanuts, wheat, soy, sesame (in " + lang + "). Use confidence low when the text is hard to read or the dish is ambiguous. Never add dishes that are not on the menu. Skip drinks unless the menu has only drinks. At most 40 dishes. If the photo is not a menu, reply {\"is_menu\":false,\"dishes\":[]}.";
     try {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -87,6 +87,7 @@ function readMenu(req, res) {
       });
       const d = await r.json();
       if (!r.ok) { console.error("menu api", r.status, JSON.stringify(d).slice(0, 300)); return json(502, { error: "model error" }); }
+      if (d.usage) console.log("menu usage", JSON.stringify({ model: d.model, input: d.usage.input_tokens, output: d.usage.output_tokens, dishes: null }));
       const text = (d.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
       const a = text.indexOf("{"), b = text.lastIndexOf("}");
       let out;
