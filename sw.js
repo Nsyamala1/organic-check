@@ -1,5 +1,5 @@
 /* Organic Check offline support: app shell from cache, product lookups fall back to the last copy seen. */
-const VERSION = "oc-v1";
+const VERSION = "oc-v2";
 const SHELL = ["/", "/barcode-detector.js", "/plu-data.js", "/manifest.webmanifest", "/icon-192.png"];
 
 self.addEventListener("install", (e) => {
@@ -36,5 +36,7 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   if (url.hostname === "world.openfoodfacts.org" && url.pathname.startsWith("/api/v2/product/")) { e.respondWith(networkFirst(req)); return; }
+  if (url.hostname === "en.wikipedia.org" && (url.pathname.startsWith("/api/rest_v1/page/summary/") || url.pathname === "/w/api.php")) { e.respondWith(networkFirst(req)); return; }
+  if (url.hostname === "upload.wikimedia.org") { e.respondWith(staleWhileRevalidate(req)); return; }
   if (url.hostname === "images.openfoodfacts.org" || url.hostname === "fonts.gstatic.com" || url.hostname === "fonts.googleapis.com") { e.respondWith(staleWhileRevalidate(req)); }
 });

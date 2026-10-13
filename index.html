@@ -285,6 +285,31 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 .qty { display: flex; align-items: center; gap: 6px; flex: none; }
 .qty button { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: 700 1.1rem var(--font-body); cursor: pointer; }
 .qty span { min-width: 28px; text-align: center; font: 700 1.2rem var(--font-body); font-variant-numeric: tabular-nums; }
+
+/* Menu: actions, picks, saved, tips, currency */
+.menu-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.menu-actions button { min-height: 44px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--leaf); background: transparent; color: var(--leaf); font: 600 0.9rem var(--font-body); cursor: pointer; }
+.menu-actions button.primary { background: var(--leaf); color: var(--leaf-ink); }
+.picks { border: 2px solid var(--leaf); }
+.picks h3 { margin: 0; font: 700 1.05rem var(--font-display); }
+.picks ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.picks li button { border: 0; background: none; padding: 0; color: var(--ink); font: 600 1rem var(--font-body); text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.picks li span { display: block; font-size: 0.85rem; color: var(--muted); }
+.section-title { font: 800 1.25rem var(--font-display); margin: 8px 0 0; }
+.dish .conv { display: block; font: 500 0.78rem var(--font-body); color: var(--muted); text-align: right; }
+.dish .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+#menu-saved { display: flex; flex-direction: column; gap: 8px; }
+#menu-saved .hist-head { display: flex; align-items: center; justify-content: space-between; }
+#menu-saved h2 { font: 700 1.05rem var(--font-display); }
+.saved-row { display: flex; gap: 8px; align-items: stretch; }
+.saved-row .hist { flex: 1; min-width: 0; }
+.saved-row .rm { flex: none; min-width: 44px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); font: 600 0.8rem var(--font-body); cursor: pointer; }
+.tips { color: var(--deep-muted); font-size: 0.88rem; }
+.tips summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; color: var(--deep-ink); font-weight: 600; }
+.tips ul { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.menu-opts { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.big-dish { font: 800 2.2rem/1.25 var(--font-body); overflow-wrap: anywhere; }
+.status-line { font-size: 0.88rem; color: var(--good); margin: 0; }
 </style>
 </head>
 <body>
@@ -463,17 +488,27 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       </div>
       <button type="button" id="menu-scan"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Photograph a menu</span></button>
       <input type="file" id="menu-cam" accept="image/*" capture="environment" hidden>
-      <input type="file" id="menu-file" accept="image/*" hidden>
-      <button type="button" id="menu-pick" class="photo-alt"><span>Choose a saved photo</span></button>
-      <label class="lang" for="menu-lang">Explain in
-        <select id="menu-lang" name="menu-lang">
-          <option value="en">English</option><option value="hi">Hindi</option><option value="te">Telugu</option><option value="ta">Tamil</option>
-          <option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pt">Portuguese</option>
-          <option value="ja">Japanese</option><option value="zh">Chinese</option><option value="ko">Korean</option><option value="ar">Arabic</option>
-        </select>
-      </label>
+      <input type="file" id="menu-file" accept="image/*,application/pdf" hidden>
+      <button type="button" id="menu-pick" class="photo-alt"><span>Choose a photo or PDF</span></button>
+      <div class="menu-opts">
+        <label class="lang" for="menu-lang">Explain in
+          <select id="menu-lang" name="menu-lang"><option value="en">English</option><option value="hi">Hindi</option><option value="te">Telugu</option><option value="ta">Tamil</option><option value="kn">Kannada</option><option value="ml">Malayalam</option><option value="mr">Marathi</option><option value="gu">Gujarati</option><option value="bn">Bengali</option><option value="pa">Punjabi</option><option value="ur">Urdu</option><option value="ne">Nepali</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option><option value="nl">Dutch</option><option value="pl">Polish</option><option value="ru">Russian</option><option value="tr">Turkish</option><option value="el">Greek</option><option value="ar">Arabic</option><option value="he">Hebrew</option><option value="ja">Japanese</option><option value="zh">Chinese (Simplified)</option><option value="zh-tw">Chinese (Traditional)</option><option value="ko">Korean</option><option value="vi">Vietnamese</option><option value="th">Thai</option><option value="id">Indonesian</option><option value="ms">Malay</option><option value="tl">Filipino</option><option value="sw">Swahili</option></select>
+        </label>
+        <label class="lang" for="menu-cur">Prices in
+          <select id="menu-cur" name="menu-cur"><option value="USD">USD</option><option value="INR">INR</option><option value="AUD">AUD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="CAD">CAD</option><option value="NZD">NZD</option><option value="SGD">SGD</option><option value="AED">AED</option><option value="JPY">JPY</option><option value="CNY">CNY</option><option value="KRW">KRW</option><option value="THB">THB</option><option value="MXN">MXN</option><option value="CHF">CHF</option></select>
+        </label>
+      </div>
+      <details class="tips"><summary>Tips for a good photo</summary>
+        <ul>
+          <li>Lay the menu flat and hold the phone straight above it.</li>
+          <li>Turn the flash off on glossy menus and move toward the light instead.</li>
+          <li>One page per photo. Use Add another page for the rest.</li>
+          <li>Keep dish names sharp; prices can be cut off if needed.</li>
+        </ul>
+      </details>
     </div>
     <div id="menu-out" aria-live="polite"></div>
+    <div id="menu-saved" hidden></div>
     <div id="order-bar" hidden><span class="sum" id="order-sum"></span><button type="button" id="order-show">Show to staff</button></div>
     <dialog id="order-dlg" aria-labelledby="order-title"><div class="dlg"><div class="dlg-head"><h2 id="order-title">My order</h2><button type="button" class="textbtn" id="order-close">Close</button></div><div id="order-body"></div></div></dialog>
     <p class="note">Photos show the classic version of each dish, not this restaurant's plate. Calories are rough ranges for a typical serving. Allergens are guesses from the dish name, so always ask the staff if you have an allergy.</p>
@@ -1484,9 +1519,10 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   $("menu-pick").addEventListener("click", function () { $("menu-file").click(); });
   ["menu-cam", "menu-file"].forEach(function (id) {
     $(id).addEventListener("change", function () {
-      var file = this.files && this.files[0];
+      var file = this.files && this.files[0], append = this.dataset.append === "1" && !!menu;
       this.value = "";
-      if (file) readMenu(file);
+      this.dataset.append = "";
+      if (file) readMenu(file, append);
     });
   });
 
@@ -1512,90 +1548,133 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     out.appendChild(el("p", "err", text));
   }
 
-  function readMenu(file) {
+  var menu = null, order = [], lastPreview = "";
+  var MENUS_KEY = "oc-menus", CUR_KEY = "oc-menu-cur";
+  var COUNTRY_CUR = { us: "USD", in: "INR", au: "AUD", gb: "GBP" };
+  (function () {
+    var sel = $("menu-cur"), saved = "";
+    try { saved = localStorage.getItem(CUR_KEY) || ""; } catch (e) {}
+    sel.value = saved || COUNTRY_CUR[country] || "USD";
+    sel.addEventListener("change", function () { try { localStorage.setItem(CUR_KEY, sel.value); } catch (e) {} if (menu) renderMenu(); });
+  })();
+
+  function readFileAsData(file) {
+    return new Promise(function (resolve, reject) { var r = new FileReader(); r.onload = function () { resolve(r.result); }; r.onerror = function () { reject(new Error("decode")); }; r.readAsDataURL(file); });
+  }
+  function thumbOf(dataUrl) {
+    return new Promise(function (resolve) {
+      if (!/^data:image/.test(dataUrl)) return resolve("");
+      var img = new Image();
+      img.onload = function () { var k = Math.min(1, 360 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); resolve(c.toDataURL("image/jpeg", 0.6)); };
+      img.onerror = function () { resolve(""); };
+      img.src = dataUrl;
+    });
+  }
+
+  function readMenu(file, append) {
     var out = $("menu-out");
-    out.textContent = "";
-    out.appendChild(el("p", "note", "Reading the menu\u2026 This usually takes 10 to 30 seconds."));
-    for (var i = 0; i < 3; i++) out.appendChild(el("div", "skel"));
-    out.scrollIntoView({ block: "start" });
-    shrink(file).then(function (dataUrl) {
-      var pv = el("img");
-      pv.id = "menu-preview"; pv.src = dataUrl; pv.alt = "Your menu photo";
-      out.insertBefore(pv, out.firstChild);
+    var isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
+    if (isPdf && file.size > 8e6) return menuError("That PDF is larger than 8 MB. Try a smaller file or a photo of each page.");
+    var wait = el("div");
+    wait.appendChild(el("p", "note", (append ? "Reading the next page" : "Reading the menu") + "… This usually takes 10 to 30 seconds."));
+    for (var i = 0; i < (append ? 1 : 3); i++) wait.appendChild(el("div", "skel"));
+    if (append) out.appendChild(wait); else { out.textContent = ""; out.appendChild(wait); menu = null; }
+    wait.scrollIntoView({ block: "start" });
+    (isPdf ? readFileAsData(file) : shrink(file)).then(function (dataUrl) {
+      if (!append) lastPreview = dataUrl;
       return fetch("/api/read-menu", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl, lang: $("menu-lang").value, avoid: prefsOn().filter(function (k) { return k !== "palm"; }) }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._status = r.status; return d; }); })
-        .then(function (d) { showMenu(d, dataUrl); });
+        .then(function (d) { return thumbOf(dataUrl).then(function (t) { wait.remove(); takeMenu(d, t, append); }); });
     }).catch(function (e) {
-      menuError(e && e.message === "decode" ? "That photo could not be opened. Try a JPEG or PNG photo." : "Could not reach the server. Check your connection and try again.");
+      wait.remove();
+      var msg = e && e.message === "decode" ? "That file could not be opened. Try a JPEG, PNG or PDF." : "Could not reach the server. Check your connection and try again.";
+      if (append && menu) out.appendChild(el("p", "err", msg)); else menuError(msg);
     });
   }
+
+  function statusError(d) {
+    if (d._status === 503) return "Menu reading is not switched on yet. The app owner needs to add an API key.";
+    if (d._status === 429) return d.message || "You have reached today's limit for menu scans. Try again tomorrow.";
+    if (d._status === 413) return "That file is too large. Try a smaller photo or PDF.";
+    if (d._status !== 200) return "The menu could not be read right now. Wait a moment and try again.";
+    var items = (d.dishes || []).filter(function (x) { return x && (x.english || x.original); });
+    if (!d.is_menu || !items.length) return d.is_menu === false ? "This does not look like a menu. Take a closer, straight-on photo of the dish list." : "No dishes could be read. Try a sharper photo with good light, one page at a time.";
+    return "";
+  }
+
+  function takeMenu(d, thumb, append) {
+    var err = statusError(d);
+    if (err) { if (append && menu) { $("menu-out").appendChild(el("p", "err", err)); } else menuError(err); return; }
+    var items = d.dishes.filter(function (x) { return x && (x.english || x.original); });
+    if (append && menu) {
+      var seen = menu.dishes.map(function (x) { return (x.original || x.english || "").trim(); });
+      items.forEach(function (x) { if (seen.indexOf((x.original || x.english || "").trim()) === -1) menu.dishes.push(x); });
+      menu.pages++;
+      if (!menu.staff_note && d.staff_note) menu.staff_note = d.staff_note;
+      if (!menu.currency && d.currency) menu.currency = d.currency;
+    } else {
+      menu = { id: Date.now(), ts: Date.now(), cuisine: d.cuisine || "", menu_language: d.menu_language || "", currency: d.currency || "", staff_note: d.staff_note || null, dishes: items, pages: 1, thumb: thumb };
+      order = [];
+    }
+    saveMenu(menu);
+    renderMenu();
+    if (append) $("menu-out").lastElementChild && window.scrollTo(0, $("menu-out").getBoundingClientRect().top + window.scrollY);
+  }
+
+  /* Saved menus on this device */
+  function readMenus() { try { return JSON.parse(localStorage.getItem(MENUS_KEY) || "[]") || []; } catch (e) { return []; } }
+  function saveMenu(m) {
+    var clean = JSON.parse(JSON.stringify(m, function (k, v) { return k.charAt(0) === "_" ? undefined : v; }));
+    var list = readMenus().filter(function (x) { return x.id !== m.id; });
+    list.unshift(clean);
+    for (var n = 10; n > 0; n--) {
+      try { localStorage.setItem(MENUS_KEY, JSON.stringify(list.slice(0, n))); break; } catch (e) {}
+    }
+    drawSaved();
+  }
+  function drawSaved() {
+    var box = $("menu-saved"), list = readMenus();
+    box.textContent = "";
+    box.hidden = !list.length;
+    if (!list.length) return;
+    var head = el("div", "hist-head");
+    head.appendChild(el("h2", "", "Saved menus"));
+    var clr = el("button", "textbtn", "Clear");
+    clr.type = "button";
+    clr.addEventListener("click", function () { try { localStorage.removeItem(MENUS_KEY); } catch (e) {} drawSaved(); });
+    head.appendChild(clr);
+    box.appendChild(head);
+    box.appendChild(el("p", "note", "Saved on this phone, so they open without a connection."));
+    list.forEach(function (m) {
+      var row = el("div", "saved-row");
+      var b = el("button", "hist");
+      b.type = "button";
+      if (m.thumb) { var im = el("img"); im.src = m.thumb; im.alt = ""; b.appendChild(im); }
+      var when = new Date(m.ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      b.appendChild(el("span", "", (m.cuisine ? m.cuisine + " menu" : "Menu") + ", " + m.dishes.length + " items, " + when));
+      b.addEventListener("click", function () { menu = m; order = []; lastPreview = ""; renderMenu(); $("menu-out").scrollIntoView({ block: "start" }); });
+      var rm = el("button", "rm", "Remove");
+      rm.type = "button";
+      rm.setAttribute("aria-label", "Remove this saved menu");
+      rm.addEventListener("click", function () { try { localStorage.setItem(MENUS_KEY, JSON.stringify(readMenus().filter(function (x) { return x.id !== m.id; }))); } catch (e) {} drawSaved(); });
+      row.appendChild(b); row.appendChild(rm);
+      box.appendChild(row);
+    });
+  }
+
+  /* Currency */
+  var fxRates = {};
+  function homeCur() { return $("menu-cur").value || "USD"; }
+  function money(v, cur) {
+    try { return new Intl.NumberFormat(undefined, { style: "currency", currency: cur, maximumFractionDigits: v >= 100 ? 0 : 2 }).format(v); } catch (e) { return cur + " " + Math.round(v); }
+  }
+  function getRates(base) {
+    if (!fxRates[base]) fxRates[base] = fetchJson("/api/fx?base=" + encodeURIComponent(base)).catch(function () { delete fxRates[base]; return null; });
+    return fxRates[base];
+  }
+  function priceNum(x) { var v = Number(x.price_value); return isFinite(v) && v > 0 ? v : 0; }
 
   var SPICE = ["Not spicy", "Mild", "Medium spicy", "Hot"];
-
-  function showMenu(d, dataUrl) {
-    var out = $("menu-out");
-    if (d._status === 503) return menuError("Menu reading is not switched on yet. The app owner needs to add an API key.");
-    if (d._status === 429) return menuError(d.message || "You have reached today's limit for menu scans. Try again tomorrow.");
-    if (d._status === 413) return menuError("That photo is too large. Try a smaller photo.");
-    if (d._status !== 200) return menuError("The menu could not be read right now. Wait a moment and try again.");
-    out.textContent = "";
-    var pv = el("img");
-    pv.id = "menu-preview"; pv.src = dataUrl; pv.alt = "Your menu photo";
-    out.appendChild(pv);
-    var dishes = (d.dishes || []).filter(function (x) { return x && (x.english || x.original); });
-    if (!d.is_menu || !dishes.length) {
-      out.appendChild(el("p", "err", d.is_menu === false ? "This does not look like a menu. Take a closer, straight-on photo of the dish list." : "No dishes could be read. Try a sharper photo with good light, one page at a time."));
-      return;
-    }
-    var head = el("div", "menu-head");
-    head.appendChild(el("h2", "", dishes.length + (dishes.length === 1 ? " dish found" : " dishes found")));
-    var bits = [];
-    if (d.cuisine) bits.push(d.cuisine + " food");
-    if (d.menu_language) bits.push("menu in " + d.menu_language);
-    if (bits.length) head.appendChild(el("p", "note", bits.join(", ") + "."));
-    out.appendChild(head);
-
-    var hasPrefs = prefsOn().filter(function (k) { return k !== "palm"; }).length > 0;
-    dishes.forEach(function (x) { x._alerts = dishAlerts(x); });
-    var safeN = dishes.filter(function (x) { return !x._alerts.red.length; }).length;
-    if (hasPrefs) {
-      head.appendChild(el("p", "", safeN + " of " + dishes.length + " dishes fit your food alerts" + (safeN ? "." : ". Show the note below to the staff and ask for options.")));
-    } else {
-      head.appendChild(el("p", "note", "Tip: turn on My food alerts in the Packaged food tab to have each dish checked for you."));
-    }
-    lastStaffNote = d.staff_note && d.staff_note.local ? d.staff_note : null;
-    if (lastStaffNote) out.appendChild(staffCard(lastStaffNote, "Show this to the staff"));
-
-    var filters = el("div", "chips filters");
-    var list = el("div", "dishes");
-    var cards = [];
-    var opts = [["all", "All"], ["veg", "Vegetarian"], ["mild", "Not spicy"]];
-    if (hasPrefs) opts.unshift(["safe", "Safe for me (" + safeN + ")"]);
-    function apply(kind) {
-      cards.forEach(function (c) {
-        var x = c.dish;
-        c.node.hidden = kind === "safe" ? x._alerts.red.length > 0 : kind === "veg" ? !(x.vegetarian || x.vegan) : kind === "mild" ? Number(x.spice) > 0 : false;
-      });
-    }
-    opts.forEach(function (f, i) {
-      var b = el("button", "chip word", f[1]);
-      b.type = "button";
-      b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
-      b.addEventListener("click", function () {
-        Array.prototype.forEach.call(filters.children, function (c) { c.setAttribute("aria-pressed", String(c === b)); });
-        apply(f[0]);
-      });
-      filters.appendChild(b);
-    });
-    out.appendChild(filters);
-    order = [];
-    drawOrderBar();
-    dishes.forEach(function (x) { var n = dishCard(x); cards.push({ dish: x, node: n }); list.appendChild(n); });
-    out.appendChild(list);
-    apply(opts[0][0]);
-    queuePhotos(cards);
-  }
-
   var KEY_LABEL = { milk: "milk", eggs: "eggs", nuts: "tree nuts", peanuts: "peanuts", soybeans: "soy", fish: "fish", crustaceans: "shellfish", "sesame-seeds": "sesame", mustard: "mustard", gluten: "wheat or gluten", pork: "pork", beef: "beef", chicken: "chicken or poultry", lamb: "lamb", alcohol: "alcohol" };
   function dishAlerts(x) {
     var red = [], amber = [];
@@ -1610,65 +1689,105 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     });
     return { red: red, amber: amber };
   }
-  var lastStaffNote = null;
   function staffCard(n, title) {
     var c = el("div", "card staff");
     c.appendChild(el("h3", "", title));
-    var loc = el("p", "local", n.local);
-    loc.lang = "";
-    c.appendChild(loc);
+    c.appendChild(el("p", "local", n.local));
     if (n.romanized) c.appendChild(el("p", "roman", n.romanized));
     if (n.english) c.appendChild(el("p", "meaning", "Means: " + n.english));
     return c;
   }
 
-  /* Order list to show the waiter */
-  var order = [];
-  function drawOrderBar() {
-    var bar = $("order-bar");
-    var n = order.reduce(function (a, o) { return a + o.qty; }, 0);
-    bar.hidden = !n;
-    if (!n) return;
-    var lo = 0, hi = 0, known = true;
-    order.forEach(function (o) { var l = Number(o.dish.kcal_low), h = Number(o.dish.kcal_high); if (l > 0 && h >= l) { lo += l * o.qty; hi += h * o.qty; } else known = false; });
-    $("order-sum").textContent = n + (n === 1 ? " dish" : " dishes") + (lo ? ", about " + lo.toLocaleString() + "-" + hi.toLocaleString() + " kcal" + (known ? "" : " (some unknown)") : "");
-  }
-  function toggleOrder(x, btn) {
-    var i = order.findIndex(function (o) { return o.dish === x; });
-    if (i === -1) order.push({ dish: x, qty: 1 }); else order.splice(i, 1);
-    btn.setAttribute("aria-pressed", String(i === -1));
-    btn.textContent = i === -1 ? "Added to my order" : "Add to my order";
-    drawOrderBar();
-  }
-  function showOrder() {
-    var box = $("order-body");
-    box.textContent = "";
-    if (lastStaffNote) box.appendChild(staffCard(lastStaffNote, "Please note"));
-    var list = el("div", "olist");
-    order.forEach(function (o) {
-      var row = el("div", "oitem");
-      var names = el("div", "names");
-      names.appendChild(el("div", "orig", o.dish.original || o.dish.english));
-      if (o.dish.original && o.dish.english && o.dish.original !== o.dish.english) names.appendChild(el("div", "en", o.dish.english + (o.dish.price ? ", " + o.dish.price : "")));
-      row.appendChild(names);
-      var q = el("div", "qty");
-      var minus = el("button", "", "−"), num = el("span", "", String(o.qty)), plus = el("button", "", "+");
-      minus.type = plus.type = "button";
-      minus.setAttribute("aria-label", "One less " + (o.dish.english || ""));
-      plus.setAttribute("aria-label", "One more " + (o.dish.english || ""));
-      minus.addEventListener("click", function () { o.qty = Math.max(1, o.qty - 1); num.textContent = o.qty; drawOrderBar(); });
-      plus.addEventListener("click", function () { o.qty = Math.min(20, o.qty + 1); num.textContent = o.qty; drawOrderBar(); });
-      q.appendChild(minus); q.appendChild(num); q.appendChild(plus);
-      row.appendChild(q);
-      list.appendChild(row);
+  function renderMenu() {
+    var out = $("menu-out");
+    out.textContent = "";
+    if (!menu) return;
+    if (lastPreview && /^data:image/.test(lastPreview)) { var pv = el("img"); pv.id = "menu-preview"; pv.src = lastPreview; pv.alt = "Your menu photo"; out.appendChild(pv); }
+    var all = menu.dishes;
+    all.forEach(function (x) { x._alerts = dishAlerts(x); });
+    var dishes = all.filter(function (x) { return x.type !== "drink"; }), drinks = all.filter(function (x) { return x.type === "drink"; });
+    var head = el("div", "menu-head");
+    head.appendChild(el("h2", "", dishes.length + (dishes.length === 1 ? " dish" : " dishes") + (drinks.length ? " and " + drinks.length + (drinks.length === 1 ? " drink" : " drinks") : "") + " found"));
+    var bits = [];
+    if (menu.cuisine) bits.push(menu.cuisine + " food");
+    if (menu.menu_language) bits.push("menu in " + menu.menu_language);
+    if (menu.pages > 1) bits.push(menu.pages + " pages");
+    if (bits.length) head.appendChild(el("p", "note", bits.join(", ") + "."));
+    var hasPrefs = prefsOn().filter(function (k) { return k !== "palm"; }).length > 0;
+    var safeN = all.filter(function (x) { return !x._alerts.red.length; }).length;
+    if (hasPrefs) head.appendChild(el("p", "", safeN + " of " + all.length + " items fit your food alerts" + (safeN ? "." : ". Show the note below to the staff and ask for options.")));
+    else head.appendChild(el("p", "note", "Tip: turn on My food alerts in the Packaged food tab to have each dish checked for you."));
+    out.appendChild(head);
+
+    var acts = el("div", "menu-actions");
+    var more = el("button", "primary", "Add another page"); more.type = "button";
+    more.addEventListener("click", function () { $("menu-file").dataset.append = "1"; $("menu-file").click(); });
+    var pick = el("button", "", "Pick for me"); pick.type = "button";
+    var share = el("button", "", "Share menu"); share.type = "button";
+    acts.appendChild(more); acts.appendChild(pick); acts.appendChild(share);
+    out.appendChild(acts);
+    var shareStatus = el("p", "status-line"); shareStatus.hidden = true;
+    out.appendChild(shareStatus);
+    share.addEventListener("click", function () { shareMenu(shareStatus); });
+    var picksBox = el("div");
+    out.appendChild(picksBox);
+    pick.addEventListener("click", function () { pickForMe(picksBox, cards); });
+
+    if (menu.staff_note && menu.staff_note.local) out.appendChild(staffCard(menu.staff_note, "Show this to the staff"));
+
+    var filters = el("div", "chips filters");
+    var cards = [];
+    var opts = [["all", "All"], ["veg", "Vegetarian"], ["mild", "Not spicy"]];
+    if (hasPrefs) opts.unshift(["safe", "Safe for me (" + safeN + ")"]);
+    function apply(kind) {
+      cards.forEach(function (c) {
+        var x = c.dish;
+        c.node.hidden = kind === "safe" ? x._alerts.red.length > 0 : kind === "veg" ? !(x.vegetarian || x.vegan) : kind === "mild" ? Number(x.spice) > 0 : false;
+      });
+      if (drinkTitle) drinkTitle.hidden = !cards.some(function (c) { return c.dish.type === "drink" && !c.node.hidden; });
+    }
+    var drinkTitle = null;
+    opts.forEach(function (f, i) {
+      var b = el("button", "chip word", f[1]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+      b.addEventListener("click", function () {
+        Array.prototype.forEach.call(filters.children, function (c) { c.setAttribute("aria-pressed", String(c === b)); });
+        apply(f[0]);
+      });
+      filters.appendChild(b);
     });
-    box.appendChild(list);
-    box.appendChild(el("p", "note", "Hold up your phone so the staff can read the dish names."));
-    var dlg = $("order-dlg");
-    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+    out.appendChild(filters);
+    var list = el("div", "dishes");
+    dishes.forEach(function (x) { var n = dishCard(x); cards.push({ dish: x, node: n }); list.appendChild(n); });
+    out.appendChild(list);
+    if (drinks.length) {
+      drinkTitle = el("h2", "section-title", "Drinks");
+      out.appendChild(drinkTitle);
+      var dl = el("div", "dishes");
+      drinks.forEach(function (x) { var n = dishCard(x); cards.push({ dish: x, node: n }); dl.appendChild(n); });
+      out.appendChild(dl);
+    }
+    var cur = menu.currency, home = homeCur();
+    if (cur && cur !== home && all.some(priceNum)) {
+      var fxNote = el("p", "note");
+      out.appendChild(fxNote);
+      getRates(cur).then(function (r) {
+        var rate = r && r.rates && r.rates[home];
+        if (!rate) { fxNote.textContent = "Prices could not be converted right now."; return; }
+        menu._rate = rate;
+        cards.forEach(function (c) { var v = priceNum(c.dish); if (v && c.node._conv) c.node._conv.textContent = "≈ " + money(v * rate, home); });
+        fxNote.textContent = "Prices converted at today's rate (1 " + cur + " = " + rate.toFixed(4) + " " + home + "). ";
+        var a = el("a", "", "Rates By Exchange Rate API");
+        a.href = "https://www.exchangerate-api.com"; a.target = "_blank"; a.rel = "noopener";
+        fxNote.appendChild(a);
+        drawOrderBar();
+      });
+    } else menu._rate = cur === home ? 1 : 0;
+    apply(opts[0][0]);
+    drawOrderBar();
+    queuePhotos(cards);
   }
-  $("order-show").addEventListener("click", showOrder);
-  $("order-close").addEventListener("click", function () { var dlg = $("order-dlg"); if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); drawOrderBar(); });
 
   function dishCard(x) {
     var card = el("article", "card dish");
@@ -1682,19 +1801,14 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (x.original && x.original !== x.english) names.appendChild(el("div", "orig", x.original));
     names.appendChild(el("div", "en", x.english || x.original));
     top.appendChild(names);
-    if (x.price) top.appendChild(el("div", "price", String(x.price)));
+    if (x.price) {
+      var pr = el("div", "price", String(x.price));
+      var conv = el("span", "conv");
+      pr.appendChild(conv);
+      card._conv = conv;
+      top.appendChild(pr);
+    }
     body.appendChild(top);
-    if (x.what_it_is) body.appendChild(el("p", "", x.what_it_is));
-    var tags = el("div", "tags");
-    var lo = Number(x.kcal_low), hi = Number(x.kcal_high);
-    if (lo > 0 && hi >= lo) tags.appendChild(el("span", "tag kcal", "About " + lo + "-" + hi + " kcal"));
-    var sp = Math.max(0, Math.min(3, Number(x.spice) || 0));
-    tags.appendChild(el("span", sp >= 2 ? "tag hot" : "tag", SPICE[sp]));
-    if (x.vegan) tags.appendChild(el("span", "tag veg", "Vegan"));
-    else if (x.vegetarian) tags.appendChild(el("span", "tag veg", "Vegetarian"));
-    if (x.confidence === "low") tags.appendChild(el("span", "tag unsure", "Not sure about this one"));
-    body.appendChild(tags);
-    if (x.main_ingredients && x.main_ingredients.length) body.appendChild(el("p", "note", "Main ingredients: " + x.main_ingredients.join(", ") + "."));
     var al = x._alerts || { red: [], amber: [] };
     if (al.red.length) {
       card.classList.add("conflict");
@@ -1709,6 +1823,16 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       fa.appendChild(el("span", "", al.amber.map(function (a) { return "Often made with " + a.what + (a.why ? ": " + a.why : "."); }).join(" ")));
       body.insertBefore(fa, top);
     }
+    if (x.what_it_is) body.appendChild(el("p", "", x.what_it_is));
+    var tags = el("div", "tags");
+    var lo = Number(x.kcal_low), hi = Number(x.kcal_high);
+    if (lo > 0 && hi >= lo) tags.appendChild(el("span", "tag kcal", "About " + lo + "-" + hi + " kcal"));
+    if (x.type !== "drink") { var sp = Math.max(0, Math.min(3, Number(x.spice) || 0)); tags.appendChild(el("span", sp >= 2 ? "tag hot" : "tag", SPICE[sp])); }
+    if (x.vegan) tags.appendChild(el("span", "tag veg", "Vegan"));
+    else if (x.vegetarian) tags.appendChild(el("span", "tag veg", "Vegetarian"));
+    if (x.confidence === "low") tags.appendChild(el("span", "tag unsure", "Not sure about this one"));
+    body.appendChild(tags);
+    if (x.main_ingredients && x.main_ingredients.length) body.appendChild(el("p", "note", "Main ingredients: " + x.main_ingredients.join(", ") + "."));
     if (x.staff_question && x.staff_question.local && (al.amber.length || al.red.length)) {
       var ask = el("div", "ask");
       ask.appendChild(el("span", "k", "Ask the staff"));
@@ -1719,19 +1843,172 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     }
     var cont = (Array.isArray(x.contains) ? x.contains : []).map(function (k) { return KEY_LABEL[k]; }).filter(Boolean);
     if (cont.length) body.appendChild(el("p", "allergy", "Usually contains " + cont.join(", ") + ". Ask the staff to be sure."));
-    var add = el("button", "addorder", "Add to my order");
+    var acts = el("div", "acts");
+    var add = el("button", "addorder", order.some(function (o) { return o.dish === x; }) ? "Added to my order" : "Add to my order");
     add.type = "button";
-    add.setAttribute("aria-pressed", "false");
+    add.setAttribute("aria-pressed", String(order.some(function (o) { return o.dish === x; })));
     add.addEventListener("click", function () { toggleOrder(x, add); });
-    body.appendChild(add);
+    var show = el("button", "addorder", "Show to staff");
+    show.type = "button";
+    show.addEventListener("click", function () { showDish(x); });
+    acts.appendChild(add); acts.appendChild(show);
+    body.appendChild(acts);
     var more = el("a", "more", "Search more photos");
     more.href = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent((x.english || "") + " " + (x.original || ""));
     more.target = "_blank"; more.rel = "noopener";
     body.appendChild(more);
     card.appendChild(body);
-    card._ph = ph; card._cap = cap; card._dish = x;
+    card._ph = ph; card._cap = cap; card._dish = x; x._card = card;
     return card;
   }
+
+  /* Pick for me: up to 3 dishes that fit the alerts, favouring sure readings */
+  function pickForMe(box, cards) {
+    var pool = menu.dishes.filter(function (x) { return x.type !== "drink" && !x._alerts.red.length; });
+    box.textContent = "";
+    if (!pool.length) { box.appendChild(el("p", "err", "No dish fits your food alerts. Show the staff note and ask what they can make.")); return; }
+    var scored = pool.map(function (x) {
+      var s = Math.random();
+      if (x._alerts.amber.length) s -= 2;
+      if (x.confidence === "low") s -= 1.5;
+      if (x.confidence === "high") s += 0.5;
+      if (Number(x.spice) >= 3) s -= 0.5;
+      return { x: x, s: s };
+    }).sort(function (a, b) { return b.s - a.s; }).slice(0, 3).map(function (o) { return o.x; });
+    var c = el("div", "card picks");
+    c.appendChild(el("h3", "", scored.length === 1 ? "Our pick for you" : "Our picks for you"));
+    var ol = el("ol");
+    scored.forEach(function (x) {
+      var li = el("li"), b = el("button", "", x.english || x.original);
+      b.type = "button";
+      b.addEventListener("click", function () { x._card.hidden = false; x._card.scrollIntoView({ block: "start", behavior: "smooth" }); });
+      li.appendChild(b);
+      var why = [];
+      if (prefsOn().length) why.push("fits your food alerts");
+      if (x._alerts.amber.length) why.push("ask about " + x._alerts.amber.map(function (a) { return a.what; }).join(", "));
+      why.push(SPICE[Math.max(0, Math.min(3, Number(x.spice) || 0))].toLowerCase());
+      if (Number(x.kcal_low) > 0) why.push("about " + x.kcal_low + "-" + x.kcal_high + " kcal");
+      li.appendChild(el("span", "", why.join(", ").replace(/^./, function (ch) { return ch.toUpperCase(); }) + "."));
+      ol.appendChild(li);
+    });
+    c.appendChild(ol);
+    var row = el("div", "menu-actions");
+    var addAll = el("button", "primary", "Add these to my order"); addAll.type = "button";
+    addAll.addEventListener("click", function () {
+      scored.forEach(function (x) { if (!order.some(function (o) { return o.dish === x; })) { order.push({ dish: x, qty: 1 }); var btn = x._card && x._card.querySelector(".addorder"); if (btn) { btn.setAttribute("aria-pressed", "true"); btn.textContent = "Added to my order"; } } });
+      drawOrderBar();
+    });
+    var again = el("button", "", "Pick again"); again.type = "button";
+    again.addEventListener("click", function () { pickForMe(box, cards); });
+    row.appendChild(addAll); row.appendChild(again);
+    c.appendChild(row);
+    box.appendChild(c);
+  }
+
+  /* Share as text */
+  function menuText() {
+    var lines = [(menu.cuisine ? menu.cuisine + " menu" : "Menu") + (menu.menu_language ? " (" + menu.menu_language + ")" : "") + ", read with Organic Check"];
+    menu.dishes.forEach(function (x, i) {
+      var bits = [(i + 1) + ". " + (x.english || x.original) + (x.original && x.original !== x.english ? " / " + x.original : "")];
+      if (x.price) bits.push(x.price);
+      if (Number(x.kcal_low) > 0) bits.push("about " + x.kcal_low + "-" + x.kcal_high + " kcal");
+      if (x.vegan) bits.push("vegan"); else if (x.vegetarian) bits.push("vegetarian");
+      var cont = (x.contains || []).map(function (k) { return KEY_LABEL[k]; }).filter(Boolean);
+      if (cont.length) bits.push("contains " + cont.join(", "));
+      lines.push(bits.join(", "));
+      if (x.what_it_is) lines.push("   " + x.what_it_is);
+    });
+    lines.push("", location.origin + "/#menu");
+    return lines.join("\n");
+  }
+  function shareMenu(status) {
+    var text = menuText();
+    var done = function (msg) { status.textContent = msg; status.hidden = false; };
+    if (navigator.share) {
+      navigator.share({ title: "Menu", text: text }).then(function () { done("Shared."); }).catch(function (e) { if (e && e.name !== "AbortError") copyIt(); });
+    } else copyIt();
+    function copyIt() {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done("Menu copied. Paste it into any chat."); }, function () { done("Could not copy. Long-press to select the text instead."); });
+      else done("Sharing is not supported in this browser.");
+    }
+  }
+
+  /* Dialog: order list, or one dish for the staff */
+  function openDlg(title, nodes) {
+    $("order-title").textContent = title;
+    var box = $("order-body");
+    box.textContent = "";
+    nodes.forEach(function (n) { box.appendChild(n); });
+    var dlg = $("order-dlg");
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  }
+  function showDish(x) {
+    var nodes = [];
+    var big = el("div", "big-dish", x.original || x.english);
+    nodes.push(big);
+    if (x.original && x.english && x.original !== x.english) nodes.push(el("p", "note", x.english + (x.price ? ", " + x.price : "")));
+    if (x.staff_question && x.staff_question.local) nodes.push(staffCard(x.staff_question, "Question"));
+    else if (menu.staff_note && menu.staff_note.local) nodes.push(staffCard(menu.staff_note, "Please note"));
+    nodes.push(el("p", "note", "Hold up your phone so the staff can read it."));
+    openDlg("Show to staff", nodes);
+  }
+  function orderTotals() {
+    var n = 0, lo = 0, hi = 0, known = true, price = 0, priced = true;
+    order.forEach(function (o) {
+      n += o.qty;
+      var l = Number(o.dish.kcal_low), h = Number(o.dish.kcal_high);
+      if (l > 0 && h >= l) { lo += l * o.qty; hi += h * o.qty; } else known = false;
+      var v = priceNum(o.dish);
+      if (v) price += v * o.qty; else priced = false;
+    });
+    return { n: n, lo: lo, hi: hi, known: known, price: price, priced: priced };
+  }
+  function drawOrderBar() {
+    var bar = $("order-bar"), t = orderTotals();
+    bar.hidden = !t.n;
+    if (!t.n) return;
+    var parts = [t.n + (t.n === 1 ? " item" : " items")];
+    if (t.price && menu && menu.currency) parts.push(money(t.price, menu.currency) + (menu._rate && menu.currency !== homeCur() ? " (≈ " + money(t.price * menu._rate, homeCur()) + ")" : "") + (t.priced ? "" : "+"));
+    if (t.lo) parts.push("about " + t.lo.toLocaleString() + "-" + t.hi.toLocaleString() + " kcal" + (t.known ? "" : "+"));
+    $("order-sum").textContent = parts.join(", ");
+  }
+  function toggleOrder(x, btn) {
+    var i = order.findIndex(function (o) { return o.dish === x; });
+    if (i === -1) order.push({ dish: x, qty: 1 }); else order.splice(i, 1);
+    btn.setAttribute("aria-pressed", String(i === -1));
+    btn.textContent = i === -1 ? "Added to my order" : "Add to my order";
+    drawOrderBar();
+  }
+  function showOrder() {
+    var nodes = [];
+    if (menu && menu.staff_note && menu.staff_note.local) nodes.push(staffCard(menu.staff_note, "Please note"));
+    var list = el("div", "olist");
+    order.forEach(function (o) {
+      var row = el("div", "oitem");
+      var names = el("div", "names");
+      names.appendChild(el("div", "orig", o.dish.original || o.dish.english));
+      if (o.dish.original && o.dish.english && o.dish.original !== o.dish.english) names.appendChild(el("div", "en", o.dish.english + (o.dish.price ? ", " + o.dish.price : "")));
+      row.appendChild(names);
+      var q = el("div", "qty");
+      var minus = el("button", "", "−"), num = el("span", "", String(o.qty)), plus = el("button", "", "+");
+      minus.type = plus.type = "button";
+      minus.setAttribute("aria-label", "One less " + (o.dish.english || ""));
+      plus.setAttribute("aria-label", "One more " + (o.dish.english || ""));
+      minus.addEventListener("click", function () { o.qty = Math.max(1, o.qty - 1); num.textContent = o.qty; drawOrderBar(); total.textContent = $("order-sum").textContent; });
+      plus.addEventListener("click", function () { o.qty = Math.min(20, o.qty + 1); num.textContent = o.qty; drawOrderBar(); total.textContent = $("order-sum").textContent; });
+      q.appendChild(minus); q.appendChild(num); q.appendChild(plus);
+      row.appendChild(q);
+      list.appendChild(row);
+    });
+    nodes.push(list);
+    var total = el("p", "", $("order-sum").textContent);
+    nodes.push(total);
+    nodes.push(el("p", "note", "Hold up your phone so the staff can read the dish names."));
+    openDlg("My order", nodes);
+  }
+  $("order-show").addEventListener("click", showOrder);
+  $("order-close").addEventListener("click", function () { var dlg = $("order-dlg"); if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); drawOrderBar(); });
+  drawSaved();
 
   var WIKI = "https://en.wikipedia.org";
   function wikiJson(url) {
