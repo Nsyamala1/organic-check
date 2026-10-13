@@ -252,6 +252,39 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
 button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: transparent; color: var(--leaf); font: 600 0.88rem var(--font-body); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 @media (hover: hover) { .alt:hover, .hist:hover { background: var(--good-bg); } }
 .offline { padding: 10px 14px; border-radius: 14px; background: var(--mid-bg); color: var(--mid); font-size: 0.9rem; margin: 0; }
+
+/* Menu alerts, staff note, order */
+.staff { background: var(--deep); color: var(--deep-ink); border: 0; }
+.staff { gap: 8px; }
+.staff p { margin: 0; }
+.staff h3 { margin: 0; font: 700 1rem var(--font-display); color: var(--deep-ink); }
+.staff .local { font: 700 1.35rem/1.35 var(--font-body); color: #fff; overflow-wrap: anywhere; }
+.staff .roman { font: 500 0.85rem var(--font-mono); color: var(--deep-muted); overflow-wrap: anywhere; }
+.staff .meaning { font-size: 0.9rem; color: var(--deep-muted); }
+.ask { border: 1.5px dashed var(--mid); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.ask .k { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--mid); }
+.ask .local { font: 700 1.05rem/1.4 var(--font-body); overflow-wrap: anywhere; }
+.ask .roman, .ask .meaning { font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
+.dish.conflict .ph { opacity: 0.55; }
+button.addorder { align-self: flex-start; min-height: 44px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--leaf); background: transparent; color: var(--leaf); font: 600 0.9rem var(--font-body); cursor: pointer; }
+button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--leaf-ink); }
+#order-bar { position: fixed; left: 12px; right: 12px; bottom: calc(78px + env(safe-area-inset-bottom)); z-index: 9; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); box-shadow: 0 8px 24px rgba(15, 24, 18, 0.25); max-width: 616px; margin: 0 auto; }
+#order-bar .sum { font: 600 0.9rem var(--font-body); min-width: 0; }
+#order-bar button { margin-left: auto; flex: none; min-height: 44px; padding: 8px 18px; border: 0; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 700 0.92rem var(--font-body); cursor: pointer; }
+@media (min-width: 720px) { #order-bar { bottom: 16px; } }
+#order-dlg { width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); border: 0; border-radius: 22px; padding: 0; background: var(--surface); color: var(--ink); }
+#order-dlg::backdrop { background: rgba(10, 16, 12, 0.6); }
+.dlg { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dlg-head h2 { font: 800 1.3rem var(--font-display); }
+.olist { display: flex; flex-direction: column; gap: 10px; }
+.oitem { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; }
+.oitem .names { min-width: 0; flex: 1; }
+.oitem .orig { font: 700 1.4rem/1.25 var(--font-body); overflow-wrap: anywhere; }
+.oitem .en { font-size: 0.85rem; color: var(--muted); }
+.qty { display: flex; align-items: center; gap: 6px; flex: none; }
+.qty button { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: 700 1.1rem var(--font-body); cursor: pointer; }
+.qty span { min-width: 28px; text-align: center; font: 700 1.2rem var(--font-body); font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -308,11 +341,13 @@ button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: tran
     <div id="out" aria-live="polite"></div>
     <details class="card" id="prefs"><summary><span>My food alerts</span><span class="count" id="prefs-count">Off</span></summary>
       <div class="prefs-body">
-        <p class="note">Pick what you avoid. Every scan will warn you when a product matches. Settings stay on this phone.</p>
+        <p class="note">Pick what you avoid. Product scans and menu scans will warn you when something matches. Settings stay on this phone.</p>
         <h3>Diet</h3>
         <div class="toggles" id="prefs-diet"></div>
         <h3>Allergens</h3>
         <div class="toggles" id="prefs-allergens"></div>
+        <h3>Meat and alcohol</h3>
+        <div class="toggles" id="prefs-meat"></div>
       </div>
     </details>
     <div id="history" hidden></div>
@@ -439,6 +474,8 @@ button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: tran
       </label>
     </div>
     <div id="menu-out" aria-live="polite"></div>
+    <div id="order-bar" hidden><span class="sum" id="order-sum"></span><button type="button" id="order-show">Show to staff</button></div>
+    <dialog id="order-dlg" aria-labelledby="order-title"><div class="dlg"><div class="dlg-head"><h2 id="order-title">My order</h2><button type="button" class="textbtn" id="order-close">Close</button></div><div id="order-body"></div></div></dialog>
     <p class="note">Photos show the classic version of each dish, not this restaurant's plate. Calories are rough ranges for a typical serving. Allergens are guesses from the dish name, so always ask the staff if you have an allergy.</p>
   </section>
   </main>
@@ -1271,12 +1308,13 @@ button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: tran
   /* Food alerts: stored on this device */
   var PREF_KEY = "oc-prefs";
   var DIET = [["vegetarian", "Vegetarian"], ["vegan", "Vegan"], ["palm", "No palm oil"], ["gluten", "Gluten-free"]];
+  var MEATS = [["pork", "No pork"], ["beef", "No beef"], ["chicken", "No chicken or poultry"], ["lamb", "No lamb"], ["alcohol", "No alcohol"]];
   var ALLERGENS = [["milk", "Milk"], ["eggs", "Eggs"], ["nuts", "Tree nuts"], ["peanuts", "Peanuts"], ["soybeans", "Soy"], ["fish", "Fish"], ["crustaceans", "Shellfish"], ["sesame-seeds", "Sesame"], ["mustard", "Mustard"]];
   var prefs = {};
   try { prefs = JSON.parse(localStorage.getItem(PREF_KEY) || "{}") || {}; } catch (e) { prefs = {}; }
   function prefsOn() { return Object.keys(prefs).filter(function (k) { return prefs[k]; }); }
   function drawPrefs() {
-    [["prefs-diet", DIET], ["prefs-allergens", ALLERGENS]].forEach(function (g) {
+    [["prefs-diet", DIET], ["prefs-allergens", ALLERGENS], ["prefs-meat", MEATS]].forEach(function (g) {
       var box = $(g[0]);
       box.textContent = "";
       g[1].forEach(function (it) {
@@ -1311,6 +1349,21 @@ button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: tran
       if (!prefs[a[0]]) return;
       if (has(all, a[0])) bad.push("contains " + a[1].toLowerCase());
       else if (has(traces, a[0])) trace.push(a[1].toLowerCase());
+    });
+    var ing = (p.ingredients_text || "").toLowerCase();
+    var MEAT_RE = {
+      pork: /\b(pork|bacon|ham|lard|pancetta|prosciutto|chorizo|salami|pepperoni|porc|jambon|lardons?|saindoux|schwein\w*|schinken|speck|cerdo|jam[oó]n|tocino|maiale|guanciale)\b/,
+      beef: /\b(beef|veal|tallow|b(oe|œ)uf|veau|rind\w*|vacuno|ternera|manzo)\b/,
+      chicken: /\b(chicken|poultry|turkey|duck|poulet|volaille|dinde|canard|h(ä|ae)hnchen|huhn|gefl(ü|ue)gel|pollo|pavo|tacchino)\b/,
+      lamb: /\b(lamb|mutton|agneau|mouton|lamm|cordero|agnello)\b/,
+      alcohol: /\b(alcohol|alcool|alkohol|wine|vin|wein|vino|rum|rhum|beer|bi[eè]re|bier|cerveza|liqueur|likör|brandy|whisk(e)?y|vodka|sake|mirin)\b/
+    };
+    var isAlcohol = ALC_RE.test((p.categories_tags || []).join(" "));
+    MEATS.forEach(function (m) {
+      if (!prefs[m[0]]) return;
+      if (m[0] === "alcohol" && isAlcohol) { bad.push("is an alcoholic drink"); return; }
+      if (!ing) { unsure.push(m[1].replace(/^No /, "").toLowerCase()); return; }
+      if (MEAT_RE[m[0]].test(ing)) bad.push("ingredients mention " + m[1].replace(/^No /, "").toLowerCase());
     });
     var box = el("div", "alerts");
     if (bad.length) {
@@ -1469,7 +1522,7 @@ button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: tran
       var pv = el("img");
       pv.id = "menu-preview"; pv.src = dataUrl; pv.alt = "Your menu photo";
       out.insertBefore(pv, out.firstChild);
-      return fetch("/api/read-menu", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl, lang: $("menu-lang").value }) })
+      return fetch("/api/read-menu", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl, lang: $("menu-lang").value, avoid: prefsOn().filter(function (k) { return k !== "palm"; }) }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._status = r.status; return d; }); })
         .then(function (d) { showMenu(d, dataUrl); });
     }).catch(function (e) {
@@ -1502,27 +1555,120 @@ button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: tran
     if (bits.length) head.appendChild(el("p", "note", bits.join(", ") + "."));
     out.appendChild(head);
 
+    var hasPrefs = prefsOn().filter(function (k) { return k !== "palm"; }).length > 0;
+    dishes.forEach(function (x) { x._alerts = dishAlerts(x); });
+    var safeN = dishes.filter(function (x) { return !x._alerts.red.length; }).length;
+    if (hasPrefs) {
+      head.appendChild(el("p", "", safeN + " of " + dishes.length + " dishes fit your food alerts" + (safeN ? "." : ". Show the note below to the staff and ask for options.")));
+    } else {
+      head.appendChild(el("p", "note", "Tip: turn on My food alerts in the Packaged food tab to have each dish checked for you."));
+    }
+    lastStaffNote = d.staff_note && d.staff_note.local ? d.staff_note : null;
+    if (lastStaffNote) out.appendChild(staffCard(lastStaffNote, "Show this to the staff"));
+
     var filters = el("div", "chips filters");
     var list = el("div", "dishes");
     var cards = [];
-    [["all", "All"], ["veg", "Vegetarian"], ["mild", "Not spicy"]].forEach(function (f, i) {
+    var opts = [["all", "All"], ["veg", "Vegetarian"], ["mild", "Not spicy"]];
+    if (hasPrefs) opts.unshift(["safe", "Safe for me (" + safeN + ")"]);
+    function apply(kind) {
+      cards.forEach(function (c) {
+        var x = c.dish;
+        c.node.hidden = kind === "safe" ? x._alerts.red.length > 0 : kind === "veg" ? !(x.vegetarian || x.vegan) : kind === "mild" ? Number(x.spice) > 0 : false;
+      });
+    }
+    opts.forEach(function (f, i) {
       var b = el("button", "chip word", f[1]);
       b.type = "button";
       b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
       b.addEventListener("click", function () {
         Array.prototype.forEach.call(filters.children, function (c) { c.setAttribute("aria-pressed", String(c === b)); });
-        cards.forEach(function (c) {
-          var x = c.dish;
-          c.node.hidden = f[0] === "veg" ? !(x.vegetarian || x.vegan) : f[0] === "mild" ? Number(x.spice) > 0 : false;
-        });
+        apply(f[0]);
       });
       filters.appendChild(b);
     });
     out.appendChild(filters);
+    order = [];
+    drawOrderBar();
     dishes.forEach(function (x) { var n = dishCard(x); cards.push({ dish: x, node: n }); list.appendChild(n); });
     out.appendChild(list);
+    apply(opts[0][0]);
     queuePhotos(cards);
   }
+
+  var KEY_LABEL = { milk: "milk", eggs: "eggs", nuts: "tree nuts", peanuts: "peanuts", soybeans: "soy", fish: "fish", crustaceans: "shellfish", "sesame-seeds": "sesame", mustard: "mustard", gluten: "wheat or gluten", pork: "pork", beef: "beef", chicken: "chicken or poultry", lamb: "lamb", alcohol: "alcohol" };
+  function dishAlerts(x) {
+    var red = [], amber = [];
+    var contains = Array.isArray(x.contains) ? x.contains : [];
+    var hidden = Array.isArray(x.often_hidden) ? x.often_hidden : [];
+    if (prefs.vegan && x.vegan === false) red.push("not vegan");
+    if (prefs.vegetarian && x.vegetarian === false) red.push("not vegetarian");
+    contains.forEach(function (k) { if (prefs[k] && KEY_LABEL[k]) red.push("contains " + KEY_LABEL[k]); });
+    hidden.forEach(function (h) {
+      var k = h && h.key;
+      if (prefs[k] && KEY_LABEL[k] && contains.indexOf(k) === -1) amber.push({ what: KEY_LABEL[k], why: h.why || "" });
+    });
+    return { red: red, amber: amber };
+  }
+  var lastStaffNote = null;
+  function staffCard(n, title) {
+    var c = el("div", "card staff");
+    c.appendChild(el("h3", "", title));
+    var loc = el("p", "local", n.local);
+    loc.lang = "";
+    c.appendChild(loc);
+    if (n.romanized) c.appendChild(el("p", "roman", n.romanized));
+    if (n.english) c.appendChild(el("p", "meaning", "Means: " + n.english));
+    return c;
+  }
+
+  /* Order list to show the waiter */
+  var order = [];
+  function drawOrderBar() {
+    var bar = $("order-bar");
+    var n = order.reduce(function (a, o) { return a + o.qty; }, 0);
+    bar.hidden = !n;
+    if (!n) return;
+    var lo = 0, hi = 0, known = true;
+    order.forEach(function (o) { var l = Number(o.dish.kcal_low), h = Number(o.dish.kcal_high); if (l > 0 && h >= l) { lo += l * o.qty; hi += h * o.qty; } else known = false; });
+    $("order-sum").textContent = n + (n === 1 ? " dish" : " dishes") + (lo ? ", about " + lo.toLocaleString() + "-" + hi.toLocaleString() + " kcal" + (known ? "" : " (some unknown)") : "");
+  }
+  function toggleOrder(x, btn) {
+    var i = order.findIndex(function (o) { return o.dish === x; });
+    if (i === -1) order.push({ dish: x, qty: 1 }); else order.splice(i, 1);
+    btn.setAttribute("aria-pressed", String(i === -1));
+    btn.textContent = i === -1 ? "Added to my order" : "Add to my order";
+    drawOrderBar();
+  }
+  function showOrder() {
+    var box = $("order-body");
+    box.textContent = "";
+    if (lastStaffNote) box.appendChild(staffCard(lastStaffNote, "Please note"));
+    var list = el("div", "olist");
+    order.forEach(function (o) {
+      var row = el("div", "oitem");
+      var names = el("div", "names");
+      names.appendChild(el("div", "orig", o.dish.original || o.dish.english));
+      if (o.dish.original && o.dish.english && o.dish.original !== o.dish.english) names.appendChild(el("div", "en", o.dish.english + (o.dish.price ? ", " + o.dish.price : "")));
+      row.appendChild(names);
+      var q = el("div", "qty");
+      var minus = el("button", "", "−"), num = el("span", "", String(o.qty)), plus = el("button", "", "+");
+      minus.type = plus.type = "button";
+      minus.setAttribute("aria-label", "One less " + (o.dish.english || ""));
+      plus.setAttribute("aria-label", "One more " + (o.dish.english || ""));
+      minus.addEventListener("click", function () { o.qty = Math.max(1, o.qty - 1); num.textContent = o.qty; drawOrderBar(); });
+      plus.addEventListener("click", function () { o.qty = Math.min(20, o.qty + 1); num.textContent = o.qty; drawOrderBar(); });
+      q.appendChild(minus); q.appendChild(num); q.appendChild(plus);
+      row.appendChild(q);
+      list.appendChild(row);
+    });
+    box.appendChild(list);
+    box.appendChild(el("p", "note", "Hold up your phone so the staff can read the dish names."));
+    var dlg = $("order-dlg");
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  }
+  $("order-show").addEventListener("click", showOrder);
+  $("order-close").addEventListener("click", function () { var dlg = $("order-dlg"); if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); drawOrderBar(); });
 
   function dishCard(x) {
     var card = el("article", "card dish");
@@ -1549,7 +1695,35 @@ button.textbtn { min-height: 40px; padding: 6px 4px; border: 0; background: tran
     if (x.confidence === "low") tags.appendChild(el("span", "tag unsure", "Not sure about this one"));
     body.appendChild(tags);
     if (x.main_ingredients && x.main_ingredients.length) body.appendChild(el("p", "note", "Main ingredients: " + x.main_ingredients.join(", ") + "."));
-    if (x.allergens && x.allergens.length) body.appendChild(el("p", "allergy", "May contain " + x.allergens.join(", ") + ". Ask the staff to be sure."));
+    var al = x._alerts || { red: [], amber: [] };
+    if (al.red.length) {
+      card.classList.add("conflict");
+      var fr = el("div", "flag high");
+      fr.appendChild(el("strong", "", "Not for you"));
+      fr.appendChild(el("span", "", al.red.join(", ").replace(/^./, function (c) { return c.toUpperCase(); }) + "."));
+      body.insertBefore(fr, top);
+    }
+    if (al.amber.length) {
+      var fa = el("div", "flag mid");
+      fa.appendChild(el("strong", "", "Ask first"));
+      fa.appendChild(el("span", "", al.amber.map(function (a) { return "Often made with " + a.what + (a.why ? ": " + a.why : "."); }).join(" ")));
+      body.insertBefore(fa, top);
+    }
+    if (x.staff_question && x.staff_question.local && (al.amber.length || al.red.length)) {
+      var ask = el("div", "ask");
+      ask.appendChild(el("span", "k", "Ask the staff"));
+      ask.appendChild(el("span", "local", x.staff_question.local));
+      if (x.staff_question.romanized) ask.appendChild(el("span", "roman", x.staff_question.romanized));
+      if (x.staff_question.english) ask.appendChild(el("span", "meaning", "Means: " + x.staff_question.english));
+      body.appendChild(ask);
+    }
+    var cont = (Array.isArray(x.contains) ? x.contains : []).map(function (k) { return KEY_LABEL[k]; }).filter(Boolean);
+    if (cont.length) body.appendChild(el("p", "allergy", "Usually contains " + cont.join(", ") + ". Ask the staff to be sure."));
+    var add = el("button", "addorder", "Add to my order");
+    add.type = "button";
+    add.setAttribute("aria-pressed", "false");
+    add.addEventListener("click", function () { toggleOrder(x, add); });
+    body.appendChild(add);
     var more = el("a", "more", "Search more photos");
     more.href = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent((x.english || "") + " " + (x.original || ""));
     more.target = "_blank"; more.rel = "noopener";
