@@ -38,6 +38,29 @@ function inCompany(req, res) {
   up.on("error", () => json(502, { error: "registry unreachable" }));
 }
 
+/* Open Food Facts search proxy: search.openfoodfacts.org sends no CORS headers */
+const offCache = new Map();
+async function offSearch(req, res) {
+  const json = (code, obj, cache) => { if (res.headersSent) return; res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": cache ? "public, max-age=3600" : "no-store" }); res.end(typeof obj === "string" ? obj : JSON.stringify(obj)); };
+  const u = new URL(req.url, "http://local").searchParams;
+  const q = (u.get("q") || "").slice(0, 300).trim();
+  if (q.length < 2) return json(400, { error: "query too short" });
+  const size = Math.min(10, Math.max(1, Number(u.get("page_size")) || 8));
+  const fields = /^[a-z_,]{1,200}$/.test(u.get("fields") || "") ? u.get("fields") : "code,product_name,brands";
+  const sort = u.get("sort_by") === "-unique_scans_n" ? "&sort_by=-unique_scans_n" : "";
+  const url = "https://search.openfoodfacts.org/search?q=" + encodeURIComponent(q) + "&page_size=" + size + "&fields=" + fields + sort;
+  if (offCache.has(url)) return json(200, offCache.get(url), true);
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(12000), headers: { "User-Agent": "OrganicCheck/1.0 (organic-check-production.up.railway.app)" } });
+    if (!r.ok) return json(502, { error: "search unavailable" });
+    const body = await r.text();
+    JSON.parse(body);
+    if (offCache.size > 500) offCache.clear();
+    offCache.set(url, body);
+    json(200, body, true);
+  } catch (e) { json(502, { error: "search unreachable" }); }
+}
+
 /* Menu reader: send a menu photo to Claude's vision model and return structured dishes */
 const MENU_MODEL = process.env.MENU_MODEL || "claude-sonnet-5-5";
 const MENU_PER_PERSON = Number(process.env.MENU_DAILY_PER_PERSON) || 15;
@@ -104,11 +127,12 @@ http.createServer((req, res) => {
   try { p = decodeURIComponent(req.url.split("?")[0]); } catch (e) { res.writeHead(400); return res.end("Bad request"); }
   if (p === "/api/in-company") return inCompany(req, res);
   if (p === "/api/read-menu") return readMenu(req, res);
+  if (p === "/api/off-search") return offSearch(req, res);
   if (p === "/") p = "/index.html";
   const file = path.join(root, path.normalize(p));
   if (!file.startsWith(root) || file.endsWith("server.js") || file.endsWith("package.json")) { res.writeHead(404); return res.end("Not found"); }
   const ext = path.extname(file);
-  const headers = { "Content-Type": types[ext] || "application/octet-stream", "Permissions-Policy": "camera=(self)", "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=3600" };
+  const headers = { "Content-Type": types[ext] || "application/octet-stream", "Permissions-Policy": "camera=(self)", "Cache-Control": ext === ".html" || ext === ".webmanifest" || file.endsWith("sw.js") ? "no-cache" : "public, max-age=3600" };
   const send = (data, gz) => { if (gz) headers["Content-Encoding"] = "gzip"; headers["Vary"] = "Accept-Encoding"; res.writeHead(200, headers); res.end(data); };
   const wantsGzip = /\bgzip\b/.test(req.headers["accept-encoding"] || "") && (ext === ".js" || ext === ".html" || ext === ".wasm");
   if (wantsGzip && cache.has(file)) return send(cache.get(file), true);
