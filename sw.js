@@ -1,6 +1,6 @@
 /* Organic Check offline support: app shell from cache, product lookups fall back to the last copy seen. */
-const VERSION = "oc-v2";
-const SHELL = ["/", "/barcode-detector.js", "/plu-data.js", "/manifest.webmanifest", "/icon-192.png"];
+const VERSION = "oc-v3";
+const SHELL = ["/", "/barcode-detector.js", "/plu-data.js", "/additives-data.js", "/manifest.webmanifest", "/icon-192.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -35,8 +35,8 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(staleWhileRevalidate(req));
     return;
   }
-  if (url.hostname === "world.openfoodfacts.org" && url.pathname.startsWith("/api/v2/product/")) { e.respondWith(networkFirst(req)); return; }
+  if ((url.hostname === "world.openfoodfacts.org" || url.hostname === "world.openbeautyfacts.org") && url.pathname.startsWith("/api/v2/product/")) { e.respondWith(networkFirst(req)); return; }
   if (url.hostname === "en.wikipedia.org" && (url.pathname.startsWith("/api/rest_v1/page/summary/") || url.pathname === "/w/api.php")) { e.respondWith(networkFirst(req)); return; }
   if (url.hostname === "upload.wikimedia.org") { e.respondWith(staleWhileRevalidate(req)); return; }
-  if (url.hostname === "images.openfoodfacts.org" || url.hostname === "fonts.gstatic.com" || url.hostname === "fonts.googleapis.com") { e.respondWith(staleWhileRevalidate(req)); }
+  if (url.hostname === "images.openfoodfacts.org" || url.hostname === "images.openbeautyfacts.org" || url.hostname === "fonts.gstatic.com" || url.hostname === "fonts.googleapis.com") { e.respondWith(staleWhileRevalidate(req)); }
 });

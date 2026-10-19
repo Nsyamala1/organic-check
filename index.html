@@ -310,6 +310,24 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 .menu-opts { display: flex; flex-wrap: wrap; gap: 8px 14px; }
 .big-dish { font: 800 2.2rem/1.25 var(--font-body); overflow-wrap: anywhere; }
 .status-line { font-size: 0.88rem; color: var(--good); margin: 0; }
+
+/* Product detail: nutrient levels, nutrition table, labels */
+.levels { display: flex; flex-wrap: wrap; gap: 6px; }
+.lvl { padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; }
+.lvl.low { background: var(--good-bg); color: var(--good); }
+.lvl.moderate { background: var(--mid-bg); color: var(--mid); }
+.lvl.high { background: var(--bad-bg); color: var(--bad); }
+.nutri summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; font: 600 0.92rem var(--font-body); color: var(--leaf); }
+.nutri table { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.nutri th, .nutri td { padding: 6px 4px; text-align: right; }
+.nutri th:first-child, .nutri td:first-child { text-align: left; }
+.nutri thead th { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--line); }
+.nutri tbody tr + tr td { border-top: 1px solid var(--line); }
+.nutri td.sub { padding-left: 14px; color: var(--muted); }
+.labels { display: flex; flex-wrap: wrap; gap: 6px; }
+.labels span { padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; border: 1px solid var(--line); background: var(--bg); }
+.hist .grade { flex: none; width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font: 800 0.8rem var(--font-body); color: #fff; }
+.grade.a { background: #038141; } .grade.b { background: #85bb2f; } .grade.c { background: #fecb02; color: #1d1d1b; } .grade.d { background: #ee8100; } .grade.e { background: #e63e11; }
 </style>
 </head>
 <body>
@@ -517,6 +535,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 </div>
 
 <script src="barcode-detector.js"></script>
+<script src="additives-data.js"></script>
 <script src="plu-data.js"></script>
 <script>
 (function () {
@@ -618,19 +637,43 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     var nova = Number(p.nova_group) || 0, grade = (p.nutriscore_grade || "").toLowerCase();
     var novaTone = nova === 1 || nova === 2 ? "good" : nova === 3 ? "mid" : nova === 4 ? "bad" : "";
     var gradeTone = grade === "a" || grade === "b" ? "good" : grade === "c" ? "mid" : grade === "d" || grade === "e" ? "bad" : "";
-    facts.appendChild(fact("Additives", String(additives.length), additives.length ? additives.join(", ") : "None listed", additives.length ? "" : "good"));
+    var ADD = window.ADDITIVES || {};
+    var risky = additives.filter(function (c) { return ADD[c] && ADD[c][1] > 0; });
+    var addNames = additives.map(function (c) { return ADD[c] ? c + " " + ADD[c][0] : c; });
+    var addTone = !additives.length ? "good" : risky.some(function (c) { return ADD[c][1] === 2; }) ? "bad" : risky.length ? "mid" : "";
+    facts.appendChild(fact("Additives", String(additives.length), additives.length ? addNames.join(", ") : "None listed", addTone));
     if (!isAlc) facts.appendChild(fact("Processing", p.nova_group ? "NOVA " + p.nova_group : "Unknown", p.nova_group ? NOVA[p.nova_group] : "Not enough data to rate", novaTone));
     if (!isAlc) facts.appendChild(fact("Nutri-Score", p.nutriscore_grade ? p.nutriscore_grade.toUpperCase() : "n/a", "A is best, E is worst", gradeTone));
     card.appendChild(facts);
     if (isAlc) card.appendChild(el("p", "note", ALC_SHORT));
+    if (risky.length) {
+      var rf = el("div", risky.some(function (c) { return ADD[c][1] === 2; }) ? "flag high" : "flag mid");
+      rf.appendChild(el("strong", "", "Additives to watch"));
+      rf.appendChild(el("span", "", risky.map(function (c) { return c + " (" + ADD[c][0].toLowerCase() + (ADD[c][2] ? ", " + ADD[c][2] : "") + ")"; }).join(", ") + ": the European Food Safety Authority found that some people may get more than the safe daily amount" + (risky.some(function (c) { return ADD[c][1] === 2; }) ? ", with a high risk for some." : ".")));
+      card.appendChild(rf);
+    }
+    if (!isAlc) {
+      var lv = productLevels(p);
+      if (lv) card.appendChild(lv);
+      var why = whyProcessed(p);
+      if (why) card.appendChild(why);
+      var nt = nutritionTable(p);
+      if (nt) card.appendChild(nt);
+    }
 
     if (organic.length) {
       var shown = tags.filter(function (t) { return /organic|bio|jaivik/.test(t) && t !== "en:organic"; });
       if (!shown.length) shown = organic;
       card.appendChild(el("p", "note", "Labels recorded: " + shown.map(function (t) { return t.replace(/^[a-z]{2}:/, "").replace(/-/g, " "); }).join(", ") + "."));
     }
+    var lb = labelChips(tags, organic);
+    if (lb) card.appendChild(lb);
     var eco = (p.ecoscore_grade || "").toLowerCase();
-    if (/^[a-e]$/.test(eco)) card.appendChild(el("p", "note", "Environmental score (Open Food Facts Green-Score): " + eco.toUpperCase() + ", where A has the lowest impact and E the highest."));
+    var co2 = p.ecoscore_data && p.ecoscore_data.agribalyse && Number(p.ecoscore_data.agribalyse.co2_total);
+    var envBits = [];
+    if (/^[a-e]$/.test(eco)) envBits.push("Environmental score (Open Food Facts Green-Score): " + eco.toUpperCase() + ", where A has the lowest impact and E the highest.");
+    if (co2 > 0) envBits.push("Carbon footprint: about " + Math.round(co2 * 100) + " g CO\u2082e per 100 g (Agribalyse estimate for this kind of food).");
+    if (envBits.length) card.appendChild(el("p", "note", envBits.join(" ")));
     if (p.ingredients_text) card.appendChild(el("p", "ing", "Ingredients: " + p.ingredients_text));
 
     var companies = [(p.brand_owner || "").trim()].concat((p.brands || "").split(",").map(function (x) { return x.trim(); }).slice(0, 2)).filter(Boolean);
@@ -664,21 +707,128 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (!organic.length && !isAlc) loadAlternatives(p, card);
   }
 
+  /* Nutrient traffic lights, nutrition table, NOVA markers, labels */
+  var LEVEL_NAMES = [["fat", "Fat"], ["saturated-fat", "Saturated fat"], ["sugars", "Sugars"], ["salt", "Salt"]];
+  function productLevels(p) {
+    var lv = p.nutrient_levels || {};
+    var keys = LEVEL_NAMES.filter(function (k) { return lv[k[0]]; });
+    if (!keys.length) return null;
+    var row = el("div", "levels");
+    row.setAttribute("aria-label", "Nutrient levels per 100 g");
+    keys.forEach(function (k) { row.appendChild(el("span", "lvl " + lv[k[0]], k[1] + ": " + lv[k[0]])); });
+    return row;
+  }
+  function whyProcessed(p) {
+    var m = p.nova_groups_markers && p.nova_groups_markers["4"];
+    if (Number(p.nova_group) !== 4 || !m || !m.length) return null;
+    var ADD = window.ADDITIVES || {};
+    var names = m.map(function (x) {
+      var t = String(x[1] || "");
+      if (x[0] === "additives") { var c = t.replace(/^en:/, "").toUpperCase(); return ADD[c] ? c + " " + ADD[c][0].toLowerCase() : c; }
+      return t.replace(/^[a-z]{2}:/, "").replace(/-/g, " ");
+    });
+    return el("p", "note", "Ultra-processed because it contains " + names.join(", ") + ".");
+  }
+  function nutritionTable(p) {
+    var n = p.nutriments || {};
+    var rows = [["Energy", "energy-kcal", "kcal"], ["Fat", "fat", "g"], ["Saturated fat", "saturated-fat", "g", 1], ["Carbohydrates", "carbohydrates", "g"], ["Sugars", "sugars", "g", 1], ["Added sugars", "added-sugars", "g", 1], ["Fiber", "fiber", "g"], ["Protein", "proteins", "g"], ["Salt", "salt", "g"]];
+    rows = rows.filter(function (r) { return typeof n[r[1] + "_100g"] === "number"; });
+    if (rows.length < 3) return null;
+    var serv = Number(p.serving_quantity) > 0 ? Number(p.serving_quantity) : 0;
+    var fmt = function (v, u) { return (u === "kcal" ? Math.round(v) : v < 10 ? (Math.round(v * 10) / 10) : Math.round(v)) + " " + u; };
+    var d = el("details", "nutri");
+    d.appendChild(el("summary", "", "Nutrition facts"));
+    var t = el("table"), th = el("thead"), tr = el("tr");
+    tr.appendChild(el("th", "", ""));
+    tr.appendChild(el("th", "", "Per 100 g"));
+    if (serv) tr.appendChild(el("th", "", "Per serving" + (p.serving_size ? " (" + p.serving_size + ")" : "")));
+    th.appendChild(tr); t.appendChild(th);
+    var tb = el("tbody");
+    rows.forEach(function (r) {
+      var row = el("tr"), v = n[r[1] + "_100g"];
+      row.appendChild(el("td", r[3] ? "sub" : "", r[0]));
+      row.appendChild(el("td", "", fmt(v, r[2])));
+      if (serv) row.appendChild(el("td", "", fmt(v * serv / 100, r[2])));
+      tb.appendChild(row);
+    });
+    t.appendChild(tb);
+    d.appendChild(t);
+    return d;
+  }
+  var LABEL_NAMES = { "no-gluten": "Gluten-free", "non-gmo-project": "Non-GMO Project", "no-gmos": "No GMOs", "orthodox-union-kosher": "OU Kosher", "kosher": "Kosher", "halal": "Halal", "vegan": "Vegan", "vegetarian": "Vegetarian", "fair-trade": "Fair Trade", "fairtrade-international": "Fairtrade", "rainforest-alliance": "Rainforest Alliance", "usda-organic": "USDA Organic", "eu-organic": "EU Organic", "organic": "Organic", "triman": "Triman (recycling)", "green-dot": "Green Dot (recycling)", "msc": "MSC sustainable fish", "asc": "ASC farmed fish", "no-palm-oil": "Palm oil free", "made-in-usa": "Made in USA" };
+  function labelChips(tags, organic) {
+    var shown = [], seen = {};
+    tags.forEach(function (t) {
+      var k = t.replace(/^[a-z]{2}:/, "");
+      if (organic.indexOf(t) !== -1 && /^(organic|eu-organic|usda-organic)$/.test(k)) return;
+      var name = LABEL_NAMES[k] || k.replace(/-/g, " ").replace(/^./, function (c) { return c.toUpperCase(); });
+      if (seen[name.toLowerCase()]) return;
+      seen[name.toLowerCase()] = 1;
+      shown.push(name);
+    });
+    if (!shown.length) return null;
+    var box = el("div");
+    box.appendChild(el("p", "note", "Other labels and certifications on the pack:"));
+    var row = el("div", "labels");
+    shown.slice(0, 12).forEach(function (n) { row.appendChild(el("span", "", n)); });
+    box.appendChild(row);
+    return box;
+  }
+
+  /* Cosmetics: Open Beauty Facts, when the barcode is not a food */
+  var COSMETIC_ORGANIC_RE = /organic|(^|:)bio($|-)|cosmos|ecocert|natrue|cosmebio|soil-association|demeter|bdih|icea/;
+  function lookupCosmetic(code) {
+    return fetchJson("https://world.openbeautyfacts.org/api/v2/product/" + encodeURIComponent(code) + ".json?fields=code,product_name,brands,labels_tags,ingredients_text,image_front_small_url")
+      .then(function (d) { return d.status === 1 && d.product ? d.product : null; })
+      .catch(function () { return null; });
+  }
+  function renderCosmetic(p) {
+    var tags = p.labels_tags || [];
+    var org = tags.filter(function (t) { return COSMETIC_ORGANIC_RE.test(t); });
+    var card = el("div", "card");
+    var head = el("div", "prod");
+    if (p.image_front_small_url) { var img = el("img"); img.src = p.image_front_small_url; img.alt = ""; head.appendChild(img); }
+    var names = el("div");
+    names.appendChild(el("div", "name", p.product_name || "Unnamed product"));
+    if (p.brands) names.appendChild(el("div", "brand", p.brands));
+    head.appendChild(names);
+    card.appendChild(head);
+    card.appendChild(el("div", org.length ? "sticker" : "sticker no", org.length ? "Organic cosmetic label found" : "No organic label listed"));
+    card.appendChild(el("p", "note", "This is a cosmetic or personal care product. Data comes from Open Beauty Facts, which people edit, so a missing label can mean it was never entered."));
+    if (org.length) card.appendChild(el("p", "note", "Labels recorded: " + org.map(function (t) { return t.replace(/^[a-z]{2}:/, "").replace(/-/g, " "); }).join(", ") + ". Common organic cosmetic labels are COSMOS Organic, Ecocert, NATRUE and USDA Organic."));
+    var lb = labelChips(tags.filter(function (t) { return org.indexOf(t) === -1; }), []);
+    if (lb) card.appendChild(lb);
+    if (p.ingredients_text) card.appendChild(el("p", "ing", "Ingredients: " + p.ingredients_text));
+    var out = $("out");
+    out.textContent = "";
+    out.appendChild(card);
+    reveal(card);
+    saveHistory(p, org.length > 0, "cosmetic");
+  }
+
   function lookupCode(code) {
     showMessage("Looking up " + code + "\u2026");
-    var fields = "code,product_name,brands,brand_owner,labels_tags,categories_tags,allergens_tags,traces_tags,ingredients_analysis_tags,ecoscore_grade,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url";
+    var fields = "code,product_name,brands,brand_owner,labels_tags,categories_tags,allergens_tags,traces_tags,ingredients_analysis_tags,ecoscore_grade,nutrient_levels,nutriments,serving_size,serving_quantity,nova_groups_markers,ecoscore_data.agribalyse.co2_total,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url";
     fetch(API + "/api/v2/product/" + encodeURIComponent(code) + ".json?fields=" + fields)
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (d.status === 1 && d.product) renderProduct(d.product);
-        else {
+        if (d.status === 1 && d.product) return renderProduct(d.product);
+        return lookupCosmetic(code).then(function (c) {
+          if (c) return renderCosmetic(c);
           showMessage("No product found for " + code + ". Check the digits or search by name.", true);
+          var add = el("a", "", "Add it to Open Food Facts");
+          add.href = "https://world.openfoodfacts.org/cgi/product.pl?type=add&code=" + encodeURIComponent(code);
+          add.target = "_blank"; add.rel = "noopener";
+          var addP = el("p", "note", "Missing products can be added by anyone with a few photos. ");
+          addP.appendChild(add);
+          addP.appendChild(document.createTextNode("."));
+          $("out").appendChild(addP);
           var hint = el("button", "linkish", "Wine, beer or spirits? Check the producer");
           hint.type = "button";
           hint.addEventListener("click", goProducer);
           $("out").appendChild(el("p", "note", "Many alcohol products are not in this database yet."));
           $("out").appendChild(hint);
-        }
+        });
       })
       .catch(function () {
         showMessage("Could not reach Open Food Facts. Check your internet connection and try again.", true);
@@ -1427,10 +1577,10 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   /* Scan history: last 30 products on this device */
   var HIST_KEY = "oc-history";
   function readHistory() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || "[]") || []; } catch (e) { return []; } }
-  function saveHistory(p, organic) {
+  function saveHistory(p, organic, kind) {
     if (!p.code) return;
     var h = readHistory().filter(function (x) { return x.code !== p.code; });
-    h.unshift({ code: p.code, name: p.product_name || "Unnamed product", brand: (p.brands || "").split(",")[0], img: p.image_front_small_url || "", organic: organic });
+    h.unshift({ code: p.code, name: p.product_name || "Unnamed product", brand: (p.brands || "").split(",")[0], img: p.image_front_small_url || "", organic: organic, grade: /^[a-e]$/.test(p.nutriscore_grade || "") ? p.nutriscore_grade : "", kind: kind || "food" });
     try { localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0, 30))); } catch (e) {}
     drawHistory();
   }
@@ -1451,6 +1601,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       b.type = "button";
       if (x.img) { var im = el("img"); im.src = x.img; im.alt = ""; im.loading = "lazy"; b.appendChild(im); }
       b.appendChild(el("span", "", x.name + (x.brand && x.name.toLowerCase().indexOf(x.brand.toLowerCase()) === -1 ? " (" + x.brand + ")" : "")));
+      if (x.grade) { var g = el("span", "grade " + x.grade, x.grade.toUpperCase()); g.setAttribute("aria-label", "Nutri-Score " + x.grade.toUpperCase()); g.title = "Nutri-Score " + x.grade.toUpperCase(); b.appendChild(g); }
       b.appendChild(el("span", x.organic ? "badge ok" : "badge", x.organic ? "Organic" : "No label"));
       b.addEventListener("click", function () { $("q").value = x.code; lookupCode(x.code); window.scrollTo(0, 0); });
       box.appendChild(b);
