@@ -328,6 +328,11 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 .labels span { padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; border: 1px solid var(--line); background: var(--bg); }
 .hist .grade { flex: none; width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font: 800 0.8rem var(--font-body); color: #fff; }
 .grade.a { background: #038141; } .grade.b { background: #85bb2f; } .grade.c { background: #fecb02; color: #1d1d1b; } .grade.d { background: #ee8100; } .grade.e { background: #e63e11; }
+.menu-link { display: flex; flex-direction: column; gap: 6px; }
+.menu-link-row { display: flex; gap: 8px; }
+.menu-link input { flex: 1 1 auto; min-width: 0; min-height: 48px; padding: 10px 16px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.08); color: var(--deep-ink); font: 500 0.95rem var(--font-body); }
+.menu-link input::placeholder { color: var(--deep-muted); }
+.menu-link button { flex: none; min-height: 48px; padding: 10px 18px; border-radius: 999px; border: 0; background: var(--deep-ink); color: var(--deep); font: 700 0.92rem var(--font-body); cursor: pointer; }
 </style>
 </head>
 <body>
@@ -508,6 +513,13 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       <input type="file" id="menu-cam" accept="image/*" capture="environment" hidden>
       <input type="file" id="menu-file" accept="image/*,application/pdf" hidden>
       <button type="button" id="menu-pick" class="photo-alt"><span>Choose a photo or PDF</span></button>
+      <form id="menu-link-form" class="menu-link" novalidate>
+        <label class="lang" for="menu-link">Or paste a link to the restaurant's online menu</label>
+        <div class="menu-link-row">
+          <input type="url" id="menu-link" name="menu-link" inputmode="url" placeholder="https://restaurant.com/menu" autocomplete="off" spellcheck="false" autocapitalize="off">
+          <button type="submit">Read link</button>
+        </div>
+      </form>
       <div class="menu-opts">
         <label class="lang" for="menu-lang">Explain in
           <select id="menu-lang" name="menu-lang"><option value="en">English</option><option value="hi">Hindi</option><option value="te">Telugu</option><option value="ta">Tamil</option><option value="kn">Kannada</option><option value="ml">Malayalam</option><option value="mr">Marathi</option><option value="gu">Gujarati</option><option value="bn">Bengali</option><option value="pa">Punjabi</option><option value="ur">Urdu</option><option value="ne">Nepali</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option><option value="nl">Dutch</option><option value="pl">Polish</option><option value="ru">Russian</option><option value="tr">Turkish</option><option value="el">Greek</option><option value="ar">Arabic</option><option value="he">Hebrew</option><option value="ja">Japanese</option><option value="zh">Chinese (Simplified)</option><option value="zh-tw">Chinese (Traditional)</option><option value="ko">Korean</option><option value="vi">Vietnamese</option><option value="th">Thai</option><option value="id">Indonesian</option><option value="ms">Malay</option><option value="tl">Filipino</option><option value="sw">Swahili</option></select>
@@ -1747,6 +1759,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (d._status === 503) return "Menu reading is not switched on yet. The app owner needs to add an API key.";
     if (d._status === 429) return d.message || "You have reached today's limit for menu scans. Try again tomorrow.";
     if (d._status === 413) return "That file is too large. Try a smaller photo or PDF.";
+    if ((d._status === 422 || d._status === 400 || d._status === 502) && d.error === "bad_url") return d.message || "That link could not be read. Try a photo of the menu instead.";
     if (d._status !== 200) return "The menu could not be read right now. Wait a moment and try again.";
     var items = (d.dishes || []).filter(function (x) { return x && (x.english || x.original); });
     if (!d.is_menu || !items.length) return d.is_menu === false ? "This does not look like a menu. Take a closer, straight-on photo of the dish list." : "No dishes could be read. Try a sharper photo with good light, one page at a time.";
@@ -1772,6 +1785,26 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     renderMenu();
     if (append) $("menu-out").lastElementChild && window.scrollTo(0, $("menu-out").getBoundingClientRect().top + window.scrollY);
   }
+
+  function readMenuUrl(url) {
+    var out = $("menu-out");
+    var wait = el("div");
+    wait.appendChild(el("p", "note", "Reading the menu page\u2026 This usually takes 10 to 30 seconds."));
+    for (var i = 0; i < 3; i++) wait.appendChild(el("div", "skel"));
+    out.textContent = ""; out.appendChild(wait); menu = null; lastPreview = "";
+    wait.scrollIntoView({ block: "start" });
+    fetch("/api/read-menu", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: url, lang: $("menu-lang").value, avoid: prefsOn().filter(function (k) { return k !== "palm"; }) }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._status = r.status; return d; }); })
+      .then(function (d) { wait.remove(); takeMenu(d, "", false); if (menu) { menu.source = url; saveMenu(menu); } })
+      .catch(function () { wait.remove(); menuError("Could not reach the server. Check your connection and try again."); });
+  }
+  $("menu-link-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = $("menu-link").value.trim();
+    if (!v) { $("menu-link").focus(); return; }
+    if (!/^https?:\/\//i.test(v)) v = "https://" + v;
+    readMenuUrl(v);
+  });
 
   /* Saved menus on this device */
   function readMenus() { try { return JSON.parse(localStorage.getItem(MENUS_KEY) || "[]") || []; } catch (e) { return []; } }
