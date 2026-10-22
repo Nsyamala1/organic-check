@@ -241,6 +241,10 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
 .alts { display: flex; flex-direction: column; gap: 8px; }
 .alts h3 { margin: 0; font: 700 1rem var(--font-display); }
 .alt { display: flex; gap: 12px; align-items: center; width: 100%; min-height: 56px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: 500 0.92rem var(--font-body); text-align: left; cursor: pointer; }
+.alt-row { display: flex; align-items: stretch; gap: 8px; }
+.alt-row .alt { flex: 1; min-width: 0; width: auto; }
+.find-online { flex: none; display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 8px 14px; border: 1.5px solid var(--leaf); border-radius: 14px; color: var(--leaf); font: 600 0.85rem var(--font-body); text-decoration: none; text-align: center; }
+@media (hover: hover) { .find-online:hover { background: var(--good-bg); } }
 .alt img, .hist img { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; background: #fff; flex: none; }
 .alt span, .hist span { min-width: 0; overflow-wrap: anywhere; }
 #history { display: flex; flex-direction: column; gap: 8px; }
@@ -1623,6 +1627,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 
   /* Organic alternatives in the same category, sold in the chosen country */
   var COUNTRY_TAG = { us: "en:united-states", in: "en:india", au: "en:australia", gb: "en:united-kingdom" };
+  var AMAZON_HOST = { us: "www.amazon.com", in: "www.amazon.in", au: "www.amazon.com.au", gb: "www.amazon.co.uk" };
   function loadAlternatives(p, card) {
     var cats = (p.categories_tags || []).filter(function (c) { return /^en:[a-z0-9-]+$/.test(c); }).reverse().slice(0, 3);
     if (!cats.length) return;
@@ -1654,7 +1659,16 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
           var brand = Array.isArray(x.brands) ? x.brands[0] : (x.brands || "").split(",")[0];
           b.appendChild(el("span", "", x.product_name + (brand ? " (" + brand + ")" : "")));
           b.addEventListener("click", function () { $("q").value = x.code; lookupCode(x.code); window.scrollTo(0, 0); });
-          wrap.appendChild(b);
+          var row = el("div", "alt-row");
+          row.appendChild(b);
+          /* A plain search on Amazon, no affiliate tag: nobody earns anything from this link. */
+          var find = el("a", "find-online", "Find online");
+          find.href = "https://" + (AMAZON_HOST[country] || AMAZON_HOST.us) + "/s?k=" + encodeURIComponent((brand ? brand + " " : "") + x.product_name);
+          find.target = "_blank";
+          find.rel = "noopener noreferrer";
+          find.setAttribute("aria-label", "Find " + x.product_name + " online (opens Amazon in a new tab)");
+          row.appendChild(find);
+          wrap.appendChild(row);
         });
       }).catch(function () { status.textContent = "Alternatives could not load right now."; });
     })(0);
