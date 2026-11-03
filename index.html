@@ -663,7 +663,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     var addTone = !additives.length ? "good" : risky.some(function (c) { return ADD[c][1] === 2; }) ? "bad" : risky.length ? "mid" : "";
     facts.appendChild(fact("Additives", String(additives.length), additives.length ? addNames.join(", ") : "None listed", addTone));
     if (!isAlc) facts.appendChild(fact("Processing", nova ? "NOVA " + nova : "Not rated", nova ? NOVA[nova] : "Needs a full ingredient list in the database", novaTone));
-    if (!isAlc) facts.appendChild(fact("Nutri-Score", grade ? grade.toUpperCase() : "Not rated", grade ? "A is best, E is worst" : "Needs nutrition facts in the database", gradeTone));
+    if (!isAlc) facts.appendChild(fact("Nutri-Score", grade ? grade.toUpperCase() : "Not rated", grade ? "A is best, E is worst" : /not-applicable/.test(p.nutriscore_grade || "") ? "Doesn't apply to this type of product" : "Needs nutrition facts in the database", gradeTone));
     card.appendChild(facts);
     if (isAlc) card.appendChild(el("p", "note", ALC_SHORT));
     if (risky.length) {
