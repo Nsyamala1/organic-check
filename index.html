@@ -137,6 +137,7 @@ button.alt { padding: 10px 16px; border-radius: 999px; font: 600 0.92rem var(--f
 .sticker { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-radius: 14px; background: var(--good-bg); color: var(--good); font: 700 1rem/1.25 var(--font-body); }
 .sticker::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: currentColor; flex: none; }
 .sticker.no { background: var(--mid-bg); color: var(--mid); border: 0; }
+.sticker.unk { background: var(--bg); color: var(--muted); border: 1px dashed currentColor; }
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .fact { border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: 12px; padding: 10px; min-width: 0; }
 .fact[data-tone="good"] { border-top-color: var(--good); }
@@ -638,19 +639,22 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       head.appendChild(img);
     }
     var names = el("div");
-    names.appendChild(el("div", "name", p.product_name || "Unnamed product"));
+    names.appendChild(el("div", "name", p.product_name || p.product_name_en || p.generic_name || "Name not listed in the database"));
     if (p.brands) names.appendChild(el("div", "brand", p.brands));
     head.appendChild(names);
     card.appendChild(head);
 
-    var st = el("div", organic.length ? "sticker" : "sticker no", organic.length ? "Organic label found" : "No organic label listed");
+    var thin = !organic.length && !tags.length && !p.ingredients_text && !(p.categories_tags || []).length;
+    var st = el("div", organic.length ? "sticker" : thin ? "sticker unk" : "sticker no", organic.length ? "Organic label found" : thin ? "Organic status unknown" : "No organic label listed");
     card.appendChild(st);
+    if (thin) card.appendChild(el("p", "note", "This product is in Open Food Facts but nobody has added its labels or ingredients yet, so we can't say either way. Check the package for a USDA Organic seal, or add photos to the database."));
     var al = alertsFor(p);
     if (al) card.appendChild(al);
 
     var isAlc = ALC_RE.test((p.categories_tags || []).join(" "));
     var facts = el("div", "facts");
     var nova = Number(p.nova_group) || 0, grade = (p.nutriscore_grade || "").toLowerCase();
+    if (!/^[a-e]$/.test(grade)) grade = "";
     var novaTone = nova === 1 || nova === 2 ? "good" : nova === 3 ? "mid" : nova === 4 ? "bad" : "";
     var gradeTone = grade === "a" || grade === "b" ? "good" : grade === "c" ? "mid" : grade === "d" || grade === "e" ? "bad" : "";
     var ADD = window.ADDITIVES || {};
@@ -658,8 +662,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     var addNames = additives.map(function (c) { return ADD[c] ? c + " " + ADD[c][0] : c; });
     var addTone = !additives.length ? "good" : risky.some(function (c) { return ADD[c][1] === 2; }) ? "bad" : risky.length ? "mid" : "";
     facts.appendChild(fact("Additives", String(additives.length), additives.length ? addNames.join(", ") : "None listed", addTone));
-    if (!isAlc) facts.appendChild(fact("Processing", p.nova_group ? "NOVA " + p.nova_group : "Unknown", p.nova_group ? NOVA[p.nova_group] : "Not enough data to rate", novaTone));
-    if (!isAlc) facts.appendChild(fact("Nutri-Score", p.nutriscore_grade ? p.nutriscore_grade.toUpperCase() : "n/a", "A is best, E is worst", gradeTone));
+    if (!isAlc) facts.appendChild(fact("Processing", nova ? "NOVA " + nova : "Not rated", nova ? NOVA[nova] : "Needs a full ingredient list in the database", novaTone));
+    if (!isAlc) facts.appendChild(fact("Nutri-Score", grade ? grade.toUpperCase() : "Not rated", grade ? "A is best, E is worst" : "Needs nutrition facts in the database", gradeTone));
     card.appendChild(facts);
     if (isAlc) card.appendChild(el("p", "note", ALC_SHORT));
     if (risky.length) {
@@ -805,7 +809,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     var head = el("div", "prod");
     if (p.image_front_small_url) { var img = el("img"); img.src = p.image_front_small_url; img.alt = ""; head.appendChild(img); }
     var names = el("div");
-    names.appendChild(el("div", "name", p.product_name || "Unnamed product"));
+    names.appendChild(el("div", "name", p.product_name || p.product_name_en || p.generic_name || "Name not listed in the database"));
     if (p.brands) names.appendChild(el("div", "brand", p.brands));
     head.appendChild(names);
     card.appendChild(head);
@@ -824,7 +828,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 
   function lookupCode(code) {
     showMessage("Looking up " + code + "\u2026");
-    var fields = "code,product_name,brands,brand_owner,labels_tags,categories_tags,allergens_tags,traces_tags,ingredients_analysis_tags,ecoscore_grade,nutrient_levels,nutriments,serving_size,serving_quantity,nova_groups_markers,ecoscore_data.agribalyse.co2_total,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url";
+    var fields = "code,product_name,brands,brand_owner,labels_tags,categories_tags,allergens_tags,traces_tags,ingredients_analysis_tags,ecoscore_grade,nutrient_levels,nutriments,serving_size,serving_quantity,nova_groups_markers,ecoscore_data.agribalyse.co2_total,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url,product_name_en,generic_name,completeness";
     fetch(API + "/api/v2/product/" + encodeURIComponent(code) + ".json?fields=" + fields)
       .then(function (r) { return r.json(); })
       .then(function (d) {
