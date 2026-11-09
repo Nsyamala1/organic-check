@@ -93,17 +93,17 @@ h2 { font: 600 1.15rem/1.2 var(--font-display); margin: 0; }
 .hero .eyebrow { margin-bottom: 4px; font: 500 0.72rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--deep-muted); }
 .hero h2 { font: 800 clamp(1.7rem, 7vw, 2.1rem)/1.05 var(--font-display); letter-spacing: -0.015em; color: var(--deep-ink); }
 .hero .lead { text-wrap: pretty; margin: 0; color: var(--deep-muted); font-size: 0.95rem; max-width: 36ch; }
-#scan { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 64px; border: 0; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 1.15rem var(--font-body); cursor: pointer; }
-#scan svg { width: 28px; height: 28px; }
+#scan, .cmp-scan { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 64px; border: 0; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 1.15rem var(--font-body); cursor: pointer; }
+#scan svg, .cmp-scan svg { width: 28px; height: 28px; }
 #photo, .photo-alt { align-self: center; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 18px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.35); background: transparent; color: var(--deep-ink); font: 600 0.92rem var(--font-body); cursor: pointer; }
 #photo svg { width: 18px; height: 18px; }
 #menu-scan { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 64px; border: 0; border-radius: 999px; background: var(--sticker); color: var(--sticker-ink); font: 800 1.1rem var(--font-body); cursor: pointer; }
 @media (prefers-reduced-motion: no-preference) {
-  #scan, #menu-scan, #photo, .photo-alt, button.go, .tab, .chip { transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease; }
-  #scan:active, #menu-scan:active, button.go:active, #photo:active, .photo-alt:active { transform: scale(0.97); }
+  #scan, .cmp-scan, #menu-scan, #photo, .photo-alt, button.go, .tab, .chip { transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease; }
+  #scan:active, .cmp-scan:active, #menu-scan:active, button.go:active, #photo:active, .photo-alt:active { transform: scale(0.97); }
 }
 @media (hover: hover) {
-  #scan:hover { background: #fbe06a; }
+  #scan:hover, .cmp-scan:hover { background: #fbe06a; }
   #photo:hover, .photo-alt:hover { background: rgba(255, 255, 255, 0.1); }
   #menu-scan:hover { background: #fbe06a; }
   button.go:hover { filter: brightness(1.08); }
@@ -338,6 +338,56 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 .menu-link input { flex: 1 1 auto; min-width: 0; min-height: 48px; padding: 10px 16px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.08); color: var(--deep-ink); font: 500 0.95rem var(--font-body); }
 .menu-link input::placeholder { color: var(--deep-muted); }
 .menu-link button { flex: none; min-height: 48px; padding: 10px 18px; border-radius: 999px; border: 0; background: var(--deep-ink); color: var(--deep); font: 700 0.92rem var(--font-body); cursor: pointer; }
+
+/* Compare */
+.cmp-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.slot { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.slot.best, .slot.active { border-width: 2px; padding: 11px; }
+.slot.best { border-color: var(--good); }
+.slot.active { border-color: var(--leaf); }
+.slot.empty { padding: 0; border: 1.5px dashed var(--line); background: transparent; }
+.slot.empty.active { border: 2px solid var(--leaf); }
+.slot-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 168px; padding: 14px; border: 0; border-radius: 16px; background: transparent; color: var(--leaf); font: 600 0.92rem var(--font-body); cursor: pointer; text-align: center; }
+.slot-add svg { width: 28px; height: 28px; }
+.slot-img { height: 84px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; color: #9aa59c; }
+.slot-img img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; }
+.slot-name { font: 700 0.95rem/1.2 var(--font-display); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.slot-brand { font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
+.slot-acts { display: flex; gap: 14px; margin-top: auto; }
+.best-tag { position: absolute; top: -11px; left: 12px; padding: 2px 10px; border-radius: 999px; background: var(--good); color: var(--surface); font: 600 0.68rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+.cmp-pick-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cmp-pick h3 { margin: 0; font: 700 1.05rem var(--font-display); }
+.cmp-pick .hint { margin: 0; font-size: 0.88rem; color: var(--muted); }
+.cmp-pick #cmp-photo { align-self: center; }
+#cmp-cam:empty { display: none; }
+#cmp-cam { display: flex; flex-direction: column; gap: 8px; }
+#cmp-recent { display: flex; flex-direction: column; gap: 8px; }
+#cmp-msg:empty, #cmp-recent:empty { display: none; }
+.cmp-or { font: 500 0.72rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.verdict { border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; background: var(--good-bg); color: var(--good); }
+.verdict strong { font: 800 1.15rem/1.2 var(--font-display); text-wrap: balance; }
+.verdict span { font-size: 0.92rem; line-height: 1.4; }
+.verdict .extra { color: var(--ink); opacity: 1; }
+.verdict.close { background: var(--mid-bg); color: var(--mid); }
+.verdict.unk { background: var(--bg); color: var(--muted); border: 1px dashed var(--line); }
+.cmp-head { position: sticky; top: 0; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; background: var(--surface); padding: 8px 0; border-bottom: 1px solid var(--line); }
+.cmp-head span { font: 600 0.8rem var(--font-body); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 10px; }
+.cmp-row { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.cmp-row:last-child { border-bottom: 0; }
+.cmp-cap { font: 500 0.66rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.cmp-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cmp-v { position: relative; padding: 8px 10px; border-radius: 10px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cmp-v .m { font: 700 1rem/1.2 var(--font-display); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.cmp-v .s { font-size: 0.78rem; line-height: 1.3; color: var(--muted); overflow-wrap: anywhere; }
+.cmp-v.win { background: var(--good-bg); color: var(--good); }
+.cmp-v.win .m { padding-right: 20px; }
+.cmp-v.win .s { color: var(--good); }
+.cmp-v .ic { position: absolute; top: 9px; right: 8px; width: 16px; height: 16px; }
+.cmp-v.bad { background: var(--bad-bg); color: var(--bad); }
+.cmp-v.bad .s { color: var(--bad); }
+.cmp-v.mid { background: var(--mid-bg); color: var(--mid); }
+.cmp-v.dim .m { color: var(--muted); font-weight: 600; }
+.cmp-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -360,7 +410,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     <button class="tab" role="tab" id="tab-food" aria-selected="true" aria-controls="panel-food"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8" stroke-width="1.6"/></svg><span>Packaged food</span></button>
     <button class="tab" role="tab" id="tab-produce" aria-selected="false" aria-controls="panel-produce" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c3-5 6-8 10-10"/></svg><span>Fresh produce</span></button>
     <button class="tab" role="tab" id="tab-usda" aria-selected="false" aria-controls="panel-usda" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>USDA list</span></button>
-    <button class="tab" role="tab" id="tab-menu" aria-selected="false" aria-controls="panel-menu" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Menu</span></button>
+    <button class="tab" role="tab" id="tab-compare" aria-selected="false" aria-controls="panel-compare" tabindex="-1"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7l-3 6a3 3 0 0 0 6 0z"/><path d="M19 7l-3 6a3 3 0 0 0 6 0z"/></svg><span>Compare</span></button>
   </nav>
 
   <main id="main">
@@ -394,7 +444,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     <div id="out" aria-live="polite"></div>
     <details class="card" id="prefs"><summary><span>My food alerts</span><span class="count" id="prefs-count">Off</span></summary>
       <div class="prefs-body">
-        <p class="note">Pick what you avoid. Product scans and menu scans will warn you when something matches. Settings stay on this phone.</p>
+        <p class="note">Pick what you avoid. Product scans and comparisons will warn you when something matches. Settings stay on this phone.</p>
         <h3>Diet</h3>
         <div class="toggles" id="prefs-diet"></div>
         <h3>Allergens</h3>
@@ -508,7 +558,28 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       </div>
     </div>
   </section>
-  <section class="panel" id="panel-menu" role="tabpanel" aria-labelledby="tab-menu" hidden>
+  <section class="panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+    <div class="panel-head"><h2>Compare two products</h2><p>Add two products to see which is the better pick, and why.</p></div>
+    <div class="cmp-slots" id="cmp-slots"></div>
+    <div class="card cmp-pick" id="cmp-pick" hidden>
+      <div class="cmp-pick-head"><h3 id="cmp-pick-title">Add the first product</h3><button type="button" class="textbtn" id="cmp-cancel" hidden>Cancel</button></div>
+      <button type="button" id="cmp-scan" class="cmp-scan"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8" stroke-width="1.6"/></svg><span id="cmp-scan-label">Scan barcode</span></button>
+      <div id="cmp-cam"></div>
+      <button type="button" class="linkish" id="cmp-photo">Use a photo instead</button>
+      <form id="cmp-form" class="search" role="search">
+        <label class="or" for="cmp-q">Or type a barcode or name</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="cmp-q" name="cmp-q" inputmode="search" enterkeyhint="search" placeholder="Barcode or product name" autocomplete="off" spellcheck="false" autocapitalize="off">
+          <button class="go" type="submit">Add</button>
+        </div>
+      </form>
+      <div id="cmp-msg" aria-live="polite"></div>
+      <div id="cmp-recent"></div>
+    </div>
+    <div id="cmp-out" aria-live="polite"></div>
+  </section>
+
+  <section class="panel" id="panel-menu" aria-label="Menu reader" hidden>
     <div class="hero">
       <div>
         <h2>Read any menu</h2>
@@ -583,14 +654,17 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 
 
   /* Tabs */
-  var TABS = ["food", "produce", "usda", "menu"];
+  var TABS = ["food", "produce", "usda", "compare"];
+  /* The menu reader has no tab any more, but #menu still opens it. */
+  var PANELS = TABS.concat(["menu"]);
   function selectTab(which, keepHash) {
-    TABS.forEach(function (k) {
-      var on = k === which;
-      $("tab-" + k).setAttribute("aria-selected", String(on));
-      $("tab-" + k).tabIndex = on ? 0 : -1;
+    if (typeof scanning !== "undefined" && scanning) stopScan();
+    PANELS.forEach(function (k) {
+      var on = k === which, t = $("tab-" + k);
+      if (t) { t.setAttribute("aria-selected", String(on)); t.tabIndex = on ? 0 : -1; }
       $("panel-" + k).hidden = !on;
     });
+    if (which === "compare" && typeof cmpEnter === "function") cmpEnter();
     if (!keepHash) {
       try { history.replaceState(null, "", location.pathname + location.search + (which === "food" ? "" : "#" + (which === "usda" ? "verify" : which))); } catch (e) {}
     }
@@ -605,7 +679,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     selectTab(TABS[n]);
     $("tab-" + TABS[n]).focus();
   });
-  function tabFromHash() { var h = location.hash.slice(1); if (h === "verify") h = "usda"; selectTab(TABS.indexOf(h) !== -1 ? h : "food", true); }
+  function tabFromHash() { var h = location.hash.slice(1); if (h === "verify") h = "usda"; selectTab(PANELS.indexOf(h) !== -1 ? h : "food", true); }
   window.addEventListener("hashchange", tabFromHash);
   tabFromHash();
 
@@ -666,6 +740,11 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (!isAlc) facts.appendChild(fact("Nutri-Score", grade ? grade.toUpperCase() : "Not rated", grade ? "A is best, E is worst" : /not-applicable/.test(p.nutriscore_grade || "") ? "Doesn't apply to this type of product" : "Needs nutrition facts in the database", gradeTone));
     card.appendChild(facts);
     if (isAlc) card.appendChild(el("p", "note", ALC_SHORT));
+    var cmpBtn = el("button", "linkish cmp-start");
+    cmpBtn.type = "button";
+    cmpBtn.appendChild(el("span", "", "Compare with another product"));
+    cmpBtn.addEventListener("click", function () { cmpStartFrom(p); });
+    card.appendChild(cmpBtn);
     if (risky.length) {
       var rf = el("div", risky.some(function (c) { return ADD[c][1] === 2; }) ? "flag high" : "flag mid");
       rf.appendChild(el("strong", "", "Additives to watch"));
@@ -826,13 +905,17 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     saveHistory(p, org.length > 0, "cosmetic");
   }
 
+  var PRODUCT_FIELDS = "code,product_name,brands,brand_owner,labels_tags,categories_tags,allergens_tags,traces_tags,ingredients_analysis_tags,ecoscore_grade,nutrient_levels,nutriments,serving_size,serving_quantity,nova_groups_markers,ecoscore_data.agribalyse.co2_total,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url,product_name_en,generic_name,completeness";
+  function fetchProduct(code) {
+    return fetch(API + "/api/v2/product/" + encodeURIComponent(code) + ".json?fields=" + PRODUCT_FIELDS)
+      .then(function (r) { return r.json(); })
+      .then(function (d) { return d.status === 1 && d.product ? d.product : null; });
+  }
   function lookupCode(code) {
     showMessage("Looking up " + code + "\u2026");
-    var fields = "code,product_name,brands,brand_owner,labels_tags,categories_tags,allergens_tags,traces_tags,ingredients_analysis_tags,ecoscore_grade,nutrient_levels,nutriments,serving_size,serving_quantity,nova_groups_markers,ecoscore_data.agribalyse.co2_total,additives_tags,nova_group,nutriscore_grade,ingredients_text,image_front_small_url,product_name_en,generic_name,completeness";
-    fetch(API + "/api/v2/product/" + encodeURIComponent(code) + ".json?fields=" + fields)
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (d.status === 1 && d.product) return renderProduct(d.product);
+    fetchProduct(code)
+      .then(function (product) {
+        if (product) return renderProduct(product);
         return lookupCosmetic(code).then(function (c) {
           if (c) return renderCosmetic(c);
           showMessage("No product found for " + code + ". Check the digits or search by name.", true);
@@ -876,8 +959,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     out.appendChild(box);
   }
 
-  function searchName(q) {
-    showMessage("Searching for " + q + "\u2026");
+  function findByName(q) {
     var enc = encodeURIComponent(q);
     var primary = "/api/off-search?q=" + enc + "&page_size=8&fields=code,product_name,brands";
     var backup = API + "/cgi/search.pl?search_terms=" + enc + "&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,brands";
@@ -894,9 +976,13 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       });
     }
 
-    fetchJson(primary).then(fromPrimary)
+    return fetchJson(primary).then(fromPrimary)
       .catch(function () { return fetchJson(backup).then(fromBackup); })
-      .catch(function () { return fetchJson(backup).then(fromBackup); })
+      .catch(function () { return fetchJson(backup).then(fromBackup); });
+  }
+  function searchName(q) {
+    showMessage("Searching for " + q + "\u2026");
+    findByName(q)
       .then(function (list) { showSearchResults(list, q); })
       .catch(function () {
         showMessage("Open Food Facts is busy or unreachable right now. Wait a few seconds and tap Check again, or type the barcode.", true);
@@ -949,6 +1035,12 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     return null;
   }
 
+  /* Where a scanned code goes: "food" (Packaged food tab) or "a" / "b" (a compare slot) */
+  var scanTarget = "food";
+  function scanMessage(text, isErr) {
+    if (scanTarget !== "food") { cmpMsg(text, isErr); return; }
+    if (text) showMessage(text, isErr); else $("out").textContent = "";
+  }
   function stopScan() {
     scanning = false;
     clearTimeout(loopTimer);
@@ -959,9 +1051,11 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     $("scan-hint").hidden = true;
     $("torch").hidden = true;
     $("scan-label").textContent = "Scan barcode";
+    $("cmp-scan-label").textContent = "Scan barcode";
   }
 
   function foundCode(code) {
+    if (scanTarget !== "food") { cmpLoad(scanTarget, code); return; }
     $("q").value = code;
     lookupCode(code);
   }
@@ -994,16 +1088,20 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     return next(null);
   }
 
-  $("scan").addEventListener("click", function () {
-    if (scanning) { stopScan(); return; }
+  function startScan(target) {
+    if (!target) return;
+    scanTarget = target;
+    var vf = $("viewfinder"), hint = $("scan-hint");
+    if (target === "food") { $("photo").parentNode.insertBefore(vf, $("photo")); $("photo").parentNode.insertBefore(hint, $("photo")); }
+    else { $("cmp-cam").appendChild(vf); $("cmp-cam").appendChild(hint); }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showMessage("This browser cannot open the camera here. Use Photo or type the barcode.", true);
+      scanMessage("This browser cannot open the camera here. Use a photo or type the barcode.", true);
       return;
     }
     scanning = true;
-    $("scan-label").textContent = "Stop";
-    $("out").textContent = "";
-    showMessage("Starting the camera\u2026");
+    $(target === "food" ? "scan-label" : "cmp-scan-label").textContent = "Stop";
+    if (target === "food") $("out").textContent = "";
+    scanMessage("Starting the camera\u2026");
     getDetector().then(function () { return openCamera(); }).then(function (s) {
       if (!scanning) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
       stream = s;
@@ -1011,7 +1109,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       v.srcObject = s;
       $("viewfinder").hidden = false;
       $("scan-hint").hidden = false;
-      $("out").textContent = "";
+      scanMessage("");
       var track = s.getVideoTracks()[0];
       try {
         var caps = track.getCapabilities ? track.getCapabilities() : {};
@@ -1026,12 +1124,13 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     }).catch(function (err) {
       stopScan();
       var n = err && err.name;
-      if (n === "NotAllowedError" || n === "SecurityError") showMessage("Camera access was blocked. Allow the camera for this site in your browser settings, or use Photo or type the barcode.", true);
-      else if (n === "NotFoundError" || n === "OverconstrainedError") showMessage("No camera was found on this device. Use Photo or type the barcode.", true);
-      else if (n === "NotReadableError") showMessage("The camera is in use by another app. Close it and try again.", true);
-      else showMessage("The scanner could not start. Use Photo or type the barcode.", true);
+      if (n === "NotAllowedError" || n === "SecurityError") scanMessage("Camera access was blocked. Allow the camera for this site in your browser settings, or use Photo or type the barcode.", true);
+      else if (n === "NotFoundError" || n === "OverconstrainedError") scanMessage("No camera was found on this device. Use Photo or type the barcode.", true);
+      else if (n === "NotReadableError") scanMessage("The camera is in use by another app. Close it and try again.", true);
+      else scanMessage("The scanner could not start. Use Photo or type the barcode.", true);
     });
-  });
+  }
+  $("scan").addEventListener("click", function () { if (scanning) stopScan(); else startScan("food"); });
 
   function readPhoto(file) {
     return createImageBitmap(file, { imageOrientation: "from-image" }).catch(function () { return createImageBitmap(file); }).then(function (bmp) {
@@ -1047,18 +1146,18 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     });
   }
 
-  $("photo").addEventListener("click", function () { $("photo-input").click(); });
+  $("photo").addEventListener("click", function () { scanTarget = "food"; $("photo-input").click(); });
   $("photo-input").addEventListener("change", function () {
     var f = this.files && this.files[0];
     this.value = "";
     if (!f) return;
     if (scanning) stopScan();
-    showMessage("Reading the barcode\u2026");
+    scanMessage("Reading the barcode\u2026");
     getDetector().then(function () { return readPhoto(f); }).then(function (code) {
       if (code) foundCode(code);
-      else showMessage("Could not read a barcode in that photo. Fill the frame with the barcode, keep it sharp and flat, and try again.", true);
+      else scanMessage("Could not read a barcode in that photo. Fill the frame with the barcode, keep it sharp and flat, and try again.", true);
     }).catch(function () {
-      showMessage("The scanner could not start. Type the barcode instead.", true);
+      scanMessage("The scanner could not start. Type the barcode instead.", true);
     });
   });
 
@@ -1540,7 +1639,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   function countPrefs() { var n = prefsOn().length; $("prefs-count").textContent = n ? n + " on" : "Off"; }
   drawPrefs();
 
-  function alertsFor(p) {
+  function alertInfo(p) {
     var on = prefsOn();
     if (!on.length) return null;
     var tags = (p.ingredients_analysis_tags || []), all = (p.allergens_tags || []), traces = (p.traces_tags || []);
@@ -1570,6 +1669,12 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       if (!ing) { unsure.push(m[1].replace(/^No /, "").toLowerCase()); return; }
       if (MEAT_RE[m[0]].test(ing)) bad.push("ingredients mention " + m[1].replace(/^No /, "").toLowerCase());
     });
+    return { bad: bad, trace: trace, unsure: unsure };
+  }
+  function alertsFor(p) {
+    var info = alertInfo(p);
+    if (!info) return null;
+    var bad = info.bad, trace = info.trace, unsure = info.unsure;
     var box = el("div", "alerts");
     if (bad.length) {
       var f = el("div", "flag high");
@@ -1629,6 +1734,380 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   }
   drawHistory();
 
+  /* Compare two products side by side. Each row picks the better value; the verdict lists the reasons in words. */
+  var cmp = { a: null, b: null, pick: null, winner: null }, CMP_KEY = "oc-compare", cmpRestored = false;
+  var SLOT_WORD = { a: "first", b: "second" };
+  var PLUS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>';
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var PHOTO_SVG = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 16l4.5-4.5 4 4 2.5-2.5L20 18"/></svg>';
+
+  function other(s) { return s === "a" ? "b" : "a"; }
+  function cmpSave() { try { localStorage.setItem(CMP_KEY, JSON.stringify({ a: cmp.a ? cmp.a.code : "", b: cmp.b ? cmp.b.code : "" })); } catch (e) {} }
+  function cmpMsg(text, isErr) { var m = $("cmp-msg"); m.textContent = ""; if (text) m.appendChild(el("p", isErr ? "err" : "note", text)); }
+  function pName(p) { return p.product_name || p.product_name_en || p.generic_name || "Unnamed product"; }
+  function shortName(p) {
+    var n = pName(p), br = (p.brands || "").split(",")[0].trim();
+    if (br && n.toLowerCase().indexOf(br.toLowerCase()) === -1 && (br + " " + n).length <= 40) n = br + " " + n;
+    return n.length > 40 ? n.slice(0, 38).replace(/\s+\S*$/, "") + "\u2026" : n;
+  }
+  function isOrganicP(p) { return (p.labels_tags || []).some(function (t) { return ORGANIC_TAGS.indexOf(t) !== -1; }); }
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+
+  function cmpStartFrom(p) {
+    cmp.a = p;
+    cmp.b = null;
+    cmp.winner = null;
+    cmpRestored = true;
+    cmpSave();
+    selectTab("compare");
+    window.scrollTo(0, 0);
+  }
+
+  function cmpEnter() {
+    if (!cmpReady) return;
+    if (!cmpRestored) {
+      cmpRestored = true;
+      var saved = {};
+      try { saved = JSON.parse(localStorage.getItem(CMP_KEY) || "{}") || {}; } catch (e) {}
+      if (!cmp.a && !cmp.b && (saved.a || saved.b)) {
+        drawSlots();
+        $("cmp-out").textContent = "";
+        $("cmp-out").appendChild(el("p", "note", "Loading your last comparison…"));
+        var get = function (c) { return c ? fetchProduct(c).catch(function () { return null; }) : Promise.resolve(null); };
+        Promise.all([get(saved.a), get(saved.b)]).then(function (r) {
+          if (!cmp.a && !cmp.b) { cmp.a = r[0]; cmp.b = r[1]; }
+          if (!cmp.a && cmp.b) { cmp.a = cmp.b; cmp.b = null; }
+          cmpRefresh(false);
+        });
+        return;
+      }
+    }
+    cmpRefresh(false);
+  }
+
+  function cmpRefresh(scroll) {
+    if (cmp.a && cmp.b) {
+      closePicker();
+      renderCompare();
+      if (scroll) reveal($("cmp-slots"));
+      return;
+    }
+    cmp.winner = null;
+    $("cmp-out").textContent = "";
+    var missing = cmp.a ? "b" : "a";
+    if ($("cmp-pick").hidden || cmp.pick !== missing) openPicker(missing, scroll);
+    else drawSlots();
+  }
+
+  function drawSlots() {
+    var box = $("cmp-slots");
+    box.textContent = "";
+    ["a", "b"].forEach(function (s) {
+      var p = cmp[s], picking = !$("cmp-pick").hidden && cmp.pick === s;
+      var d = el("div", "slot" + (p ? "" : " empty") + (picking ? " active" : "") + (p && cmp.winner === s && !picking ? " best" : ""));
+      if (!p) {
+        var add = el("button", "slot-add");
+        add.type = "button";
+        add.innerHTML = PLUS_SVG;
+        add.appendChild(el("span", "", picking ? "Adding the " + SLOT_WORD[s] + " product" : "Add the " + SLOT_WORD[s] + " product"));
+        add.addEventListener("click", function () { openPicker(s, true); });
+        d.appendChild(add);
+      } else {
+        if (cmp.winner === s && !picking) d.appendChild(el("span", "best-tag", "Better pick"));
+        var im = el("div", "slot-img");
+        if (p.image_front_small_url) {
+          var i = el("img");
+          i.src = p.image_front_small_url;
+          i.alt = "";
+          i.addEventListener("error", function () { i.remove(); im.innerHTML = PHOTO_SVG; });
+          im.appendChild(i);
+        } else im.innerHTML = PHOTO_SVG;
+        d.appendChild(im);
+        d.appendChild(el("div", "slot-name", pName(p)));
+        var br = (p.brands || "").split(",")[0].trim();
+        if (br) d.appendChild(el("div", "slot-brand", br));
+        var acts = el("div", "slot-acts");
+        var det = el("button", "textbtn", "Details");
+        det.type = "button";
+        det.setAttribute("aria-label", "Details for " + pName(p));
+        det.addEventListener("click", function () { selectTab("food"); $("q").value = p.code; lookupCode(p.code); window.scrollTo(0, 0); });
+        var ch = el("button", "textbtn", "Change");
+        ch.type = "button";
+        ch.setAttribute("aria-label", "Change " + pName(p));
+        ch.addEventListener("click", function () { openPicker(s, true); });
+        acts.appendChild(det);
+        acts.appendChild(ch);
+        d.appendChild(acts);
+      }
+      box.appendChild(d);
+    });
+  }
+
+  function openPicker(s, scroll) {
+    if (scanning) stopScan();
+    cmp.pick = s;
+    $("cmp-pick").hidden = false;
+    $("cmp-pick-title").textContent = (cmp[s] ? "Change the " : "Add the ") + SLOT_WORD[s] + " product";
+    $("cmp-cancel").hidden = !(cmp.a && cmp.b);
+    $("cmp-q").value = "";
+    cmpMsg("");
+    drawRecent();
+    drawSlots();
+    if (scroll) reveal($("cmp-pick"));
+  }
+  function closePicker() {
+    if (scanning && scanTarget !== "food") stopScan();
+    $("cmp-pick").hidden = true;
+    cmp.pick = null;
+    drawSlots();
+  }
+
+  function drawRecent() {
+    var box = $("cmp-recent"), s = cmp.pick;
+    box.textContent = "";
+    var skip = [cmp.a && cmp.a.code, cmp.b && cmp.b.code];
+    var h = readHistory().filter(function (x) { return (x.kind || "food") === "food" && skip.indexOf(x.code) === -1; }).slice(0, 6);
+    if (!h.length) return;
+    box.appendChild(el("p", "cmp-or", "Or pick a recent scan"));
+    h.forEach(function (x) {
+      var b = el("button", "hist");
+      b.type = "button";
+      if (x.img) { var im = el("img"); im.src = x.img; im.alt = ""; im.loading = "lazy"; b.appendChild(im); }
+      b.appendChild(el("span", "", x.name + (x.brand && x.name.toLowerCase().indexOf(x.brand.toLowerCase()) === -1 ? " (" + x.brand + ")" : "")));
+      b.addEventListener("click", function () { cmpLoad(s, x.code); });
+      box.appendChild(b);
+    });
+  }
+
+  function cmpLoad(s, code) {
+    if (s !== "a" && s !== "b") return;
+    cmpMsg("Looking up " + code + "…");
+    fetchProduct(code).then(function (p) {
+      if (!p) { cmpMsg("No product found for " + code + ". Check the digits or try the product name.", true); return; }
+      var o = cmp[other(s)];
+      if (o && o.code === p.code) { cmpMsg("That's the same product as the " + SLOT_WORD[other(s)] + " one. Add a different product.", true); return; }
+      cmp[s] = p;
+      saveHistory(p, isOrganicP(p));
+      cmpSave();
+      if (cmp.a && cmp.b) closePicker(); else $("cmp-pick").hidden = true;
+      cmpRefresh(true);
+    }).catch(function () {
+      cmpMsg("Could not reach Open Food Facts. Check your connection and try again.", true);
+    });
+  }
+
+  $("cmp-scan").addEventListener("click", function () { if (scanning) stopScan(); else startScan(cmp.pick); });
+  $("cmp-photo").addEventListener("click", function () { if (!cmp.pick) return; scanTarget = cmp.pick; $("photo-input").click(); });
+  $("cmp-cancel").addEventListener("click", function () { closePicker(); renderCompare(); });
+  $("cmp-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var q = $("cmp-q").value.trim(), s = cmp.pick;
+    if (!q || !s) return;
+    if (/^\d{8,14}$/.test(q)) { cmpLoad(s, q); return; }
+    cmpMsg("Searching for " + q + "…");
+    findByName(q).then(function (list) {
+      if (!list.length) { cmpMsg("No products matched " + q + ". Try a shorter name or a barcode.", true); return; }
+      var m = $("cmp-msg");
+      m.textContent = "";
+      var box = el("div", "results");
+      list.forEach(function (x) {
+        var b = el("button", "", x.name + (x.brand ? " (" + x.brand + ")" : ""));
+        b.type = "button";
+        b.addEventListener("click", function () { cmpLoad(s, x.code); });
+        box.appendChild(b);
+      });
+      m.appendChild(box);
+    }).catch(function () { cmpMsg("Open Food Facts is busy right now. Wait a few seconds and try again, or type the barcode.", true); });
+  });
+
+  /* Facts used for comparing, all per 100 g */
+  function cmpFacts(p) {
+    var tags = p.labels_tags || [];
+    var org = tags.filter(function (t) { return ORGANIC_TAGS.indexOf(t) !== -1; });
+    var thin = !org.length && !tags.length && !p.ingredients_text && !(p.categories_tags || []).length;
+    var n = p.nutriments || {};
+    var num = function (k) { var v = n[k + "_100g"]; return typeof v === "number" && isFinite(v) && v >= 0 ? v : null; };
+    var ADD = window.ADDITIVES || {};
+    var adds = (p.additives_tags || []).map(function (t) { return t.replace(/^en:/, "").toUpperCase(); });
+    var grade = (p.nutriscore_grade || "").toLowerCase();
+    var nova = Number(p.nova_group);
+    return {
+      organic: org.length ? true : thin ? null : false,
+      orgName: org.indexOf("en:usda-organic") !== -1 ? "USDA Organic" : org.indexOf("en:eu-organic") !== -1 ? "EU Organic" : org.indexOf("en:canada-organic") !== -1 ? "Canada Organic" : "Organic label",
+      nova: nova >= 1 && nova <= 4 ? nova : null,
+      adds: p.ingredients_text || adds.length ? adds : null,
+      risky: adds.filter(function (c) { return ADD[c] && ADD[c][1] > 0; }),
+      grade: /^[a-e]$/.test(grade) ? grade : null,
+      gradeNA: /not-applicable/.test(grade),
+      sugar: num("sugars"), satfat: num("saturated-fat"), salt: num("salt"), protein: num("proteins"), fiber: num("fiber"), kcal: num("energy-kcal"),
+      alerts: alertInfo(p)
+    };
+  }
+  /* "a", "b", "tie", or null when either side has no data. Small differences count as a tie. */
+  function better(x, y, higherIsBetter, minAbs) {
+    if (x === null || y === null) return null;
+    var d = higherIsBetter ? x - y : y - x;
+    if (Math.abs(d) < minAbs || Math.abs(d) < Math.max(x, y) * 0.1) return "tie";
+    return d > 0 ? "a" : "b";
+  }
+  function fmtG(v) { return (v < 10 ? Math.round(v * 10) / 10 : Math.round(v)) + " g"; }
+  function fmtTsp(g) { var t = Math.round(g / 4 * 2) / 2; return t === 0 ? "Under ½ tsp" : t + " tsp"; }
+  function catName(t) { return cap(t.replace(/^[a-z]{2}:/, "").replace(/-/g, " ")); }
+
+  function renderCompare() {
+    var out = $("cmp-out");
+    out.textContent = "";
+    if (!cmp.a || !cmp.b) return;
+    var P = { a: cmp.a, b: cmp.b }, F = { a: cmpFacts(cmp.a), b: cmpFacts(cmp.b) }, A = F.a, B = F.b;
+    var rows = [];
+    function addRow(label, fmt, win, weight, why, both) {
+      var va = fmt(A), vb = fmt(B);
+      if (!both && va[3] && vb[3]) return; /* no data on either side: leave the row out */
+      rows.push({ label: label, va: va, vb: vb, win: win, weight: weight, why: why });
+    }
+    var nd = function (t) { return [t || "No data", "", "dim", true]; };
+
+    if (A.alerts) {
+      var aw = function (x) {
+        if (x.alerts.bad.length) return [cap(x.alerts.bad.join(", ")), "", "bad"];
+        if (x.alerts.trace.length) return ["May contain " + x.alerts.trace.join(", "), "", "mid"];
+        return ["Nothing flagged", x.alerts.unsure.length ? "No data on " + x.alerts.unsure.join(", ") : ""];
+      };
+      var ab = A.alerts.bad.length > 0, bb = B.alerts.bad.length > 0, at = A.alerts.trace.length > 0, bt = B.alerts.trace.length > 0;
+      var awin = ab !== bb ? (ab ? "b" : "a") : !ab && at !== bt ? (at ? "b" : "a") : "tie";
+      addRow("Your alerts", aw, awin, ab !== bb ? 0 : 1, function () { return "no trace warnings for your alerts"; }, true);
+    }
+    addRow("Organic label", function (x) { return x.organic === null ? nd("Unknown") : x.organic ? [x.orgName] : ["None listed"]; },
+      A.organic === null || B.organic === null ? null : A.organic === B.organic ? "tie" : A.organic ? "a" : "b", 2, function () { return "organic"; });
+    addRow("Processing", function (x) { return x.nova ? ["NOVA " + x.nova, NOVA[x.nova]] : nd("Not rated"); },
+      better(A.nova, B.nova, false, 1), 2, function () { return "less processed"; });
+    var addWin = null;
+    if (A.adds && B.adds) addWin = A.risky.length !== B.risky.length ? (A.risky.length < B.risky.length ? "a" : "b") : better(A.adds.length, B.adds.length, false, 1);
+    addRow("Additives", function (x) {
+      if (!x.adds) return nd("No ingredient list");
+      return [String(x.adds.length), x.risky.length ? x.risky.length + " to watch (" + x.risky.join(", ") + ")" : x.adds.length ? "None to watch" : "None listed"];
+    }, addWin, 2, function (w) {
+      var W = F[w], L = F[other(w)];
+      if (W.risky.length < L.risky.length) return "fewer additives to watch";
+      var d = L.adds.length - W.adds.length;
+      return d + " fewer additive" + (d === 1 ? "" : "s");
+    });
+    addRow("Nutri-Score", function (x) { return x.grade ? [x.grade.toUpperCase()] : nd(x.gradeNA ? "Doesn't apply" : "Not rated"); },
+      A.grade && B.grade ? (A.grade === B.grade ? "tie" : A.grade < B.grade ? "a" : "b") : null, 1,
+      function (w) { return "better Nutri-Score (" + F[w].grade.toUpperCase() + " vs " + F[other(w)].grade.toUpperCase() + ")"; });
+    addRow("Sugar per 100 g", function (x) { return x.sugar === null ? nd() : [fmtTsp(x.sugar), fmtG(x.sugar)]; },
+      better(A.sugar, B.sugar, false, 1), 1, function (w) { var d = (F[other(w)].sugar - F[w].sugar) / 4; return d >= 1 ? Math.round(d) + " tsp less sugar" : "less sugar"; });
+    addRow("Saturated fat per 100 g", function (x) { return x.satfat === null ? nd() : [fmtG(x.satfat)]; },
+      better(A.satfat, B.satfat, false, 0.5), 1, function () { return "less saturated fat"; });
+    addRow("Salt per 100 g", function (x) { return x.salt === null ? nd() : [fmtG(x.salt)]; },
+      better(A.salt, B.salt, false, 0.1), 1, function () { return "less salt"; });
+    addRow("Protein per 100 g", function (x) { return x.protein === null ? nd() : [fmtG(x.protein)]; },
+      better(A.protein, B.protein, true, 1), 1, function () { return "more protein"; });
+    addRow("Fiber per 100 g", function (x) { return x.fiber === null ? nd() : [fmtG(x.fiber)]; },
+      better(A.fiber, B.fiber, true, 0.5), 1, function () { return "more fiber"; });
+    addRow("Calories per 100 g", function (x) { return x.kcal === null ? nd() : [Math.round(x.kcal) + " kcal"]; }, "info", 0, null);
+
+    /* Verdict */
+    var score = { a: 0, b: 0 }, why = { a: [], b: [] }, judged = 0;
+    rows.forEach(function (r) {
+      if (r.label === "Your alerts" || r.win === "info") return;
+      if (r.win === "a" || r.win === "b" || r.win === "tie") judged++;
+      if ((r.win === "a" || r.win === "b") && r.weight) { score[r.win] += r.weight; why[r.win].push(r.why(r.win)); }
+    });
+    rows.forEach(function (r) { if (r.label === "Your alerts" && r.weight && (r.win === "a" || r.win === "b")) { score[r.win] += 1; why[r.win].push(r.why(r.win)); } });
+    var badA = A.alerts && A.alerts.bad.length > 0, badB = B.alerts && B.alerts.bad.length > 0;
+    var winner = null, tone = "", title = "", text = "", extra = "";
+    var dataCount = function (x) { return [x.organic, x.nova, x.adds, x.grade, x.sugar, x.satfat, x.salt, x.protein].filter(function (v) { return v !== null; }).length; };
+    if (badA !== badB) {
+      winner = badA ? "b" : "a";
+      var L = other(winner);
+      tone = "";
+      title = shortName(P[winner]) + " is the better pick for you";
+      text = shortName(P[L]) + " matches your alerts: " + F[L].alerts.bad.join(", ") + ".";
+      if (why[winner].length) extra = cap(why[winner].slice(0, 3).join(", ")) + " too.";
+    } else if (judged < 3) {
+      tone = "unk";
+      title = "Not enough data to compare";
+      var thinP = dataCount(A) <= dataCount(B) ? P.a : P.b;
+      text = "Open Food Facts is missing most details for " + shortName(thinP) + ". Check both packs, or try another product.";
+    } else if (Math.abs(score.a - score.b) <= 1) {
+      tone = "close";
+      title = "Too close to call";
+      var parts = [];
+      if (why.a.length) parts.push(shortName(P.a) + ": " + why.a.join(", ") + ".");
+      if (why.b.length) parts.push(shortName(P.b) + ": " + why.b.join(", ") + ".");
+      text = parts.length ? "Each has its strengths. " + parts.join(" ") : "They come out about the same on everything we can compare.";
+    } else {
+      winner = score.a > score.b ? "a" : "b";
+      title = shortName(P[winner]) + " is the better pick";
+      text = cap(why[winner].slice(0, 4).join(", ")) + ".";
+      if (why[other(winner)].length) extra = "Where " + shortName(P[other(winner)]) + " does better: " + why[other(winner)].join(", ") + ".";
+    }
+    cmp.winner = winner;
+    drawSlots();
+
+    var card = el("div", "card cmp-card");
+    var v = el("div", "verdict" + (tone ? " " + tone : ""));
+    v.appendChild(el("strong", "", title));
+    if (text) v.appendChild(el("span", "", text));
+    if (extra) v.appendChild(el("span", "extra", extra));
+    card.appendChild(v);
+    if (badA && badB) {
+      var f = el("div", "flag high");
+      f.appendChild(el("strong", "", "Both match your alerts"));
+      f.appendChild(el("span", "", shortName(P.a) + ": " + A.alerts.bad.join(", ") + ". " + shortName(P.b) + ": " + B.alerts.bad.join(", ") + "."));
+      card.appendChild(f);
+    }
+
+    /* Different kinds of food make a weak comparison */
+    var ca = (cmp.a.categories_tags || []).filter(function (t) { return /^en:/.test(t); });
+    var cb = (cmp.b.categories_tags || []).filter(function (t) { return /^en:/.test(t); });
+    if (ca.length && cb.length) {
+      var related = ca.slice(-3).some(function (t) { return cb.indexOf(t) !== -1; }) || cb.slice(-3).some(function (t) { return ca.indexOf(t) !== -1; });
+      if (!related) card.appendChild(el("p", "note", "These look like different kinds of food (" + catName(ca[ca.length - 1]) + " and " + catName(cb[cb.length - 1]) + "), so the comparison may not mean much."));
+    }
+
+    var head = el("div", "cmp-head");
+    head.setAttribute("aria-hidden", "true");
+    head.appendChild(el("span", "", shortName(cmp.a)));
+    head.appendChild(el("span", "", shortName(cmp.b)));
+    card.appendChild(head);
+    var list = el("div", "cmp-rows");
+    rows.forEach(function (r) {
+      var row = el("div", "cmp-row");
+      row.appendChild(el("div", "cmp-cap", r.label));
+      var two = el("div", "cmp-two");
+      [["a", r.va], ["b", r.vb]].forEach(function (pair) {
+        var won = r.win === pair[0], val = pair[1];
+        var cell = el("div", "cmp-v" + (won ? " win" : "") + (!won && val[2] ? " " + val[2] : ""));
+        cell.appendChild(el("span", "sr", shortName(P[pair[0]]) + ": "));
+        if (won) { var ic = el("span", "ic"); ic.innerHTML = CHECK_SVG; cell.appendChild(ic); }
+        cell.appendChild(el("span", "m", val[0]));
+        if (val[1]) cell.appendChild(el("span", "s", val[1]));
+        if (won) cell.appendChild(el("span", "sr", " (better)"));
+        two.appendChild(cell);
+      });
+      row.appendChild(two);
+      list.appendChild(row);
+    });
+    card.appendChild(list);
+    card.appendChild(el("p", "note", "Sugar, fat, salt, protein and fiber are per 100 g, so different pack sizes compare fairly. Rows with no data for one product don't count toward the pick. Data comes from Open Food Facts, so check the pack if something looks off."));
+    var acts = el("div", "cmp-actions");
+    var again = el("button", "linkish", "Compare with another product");
+    again.type = "button";
+    again.addEventListener("click", function () { cmp.b = null; cmp.winner = null; cmpSave(); $("cmp-out").textContent = ""; openPicker("b", true); });
+    var reset = el("button", "textbtn", "Start over");
+    reset.type = "button";
+    reset.addEventListener("click", function () { cmp.a = null; cmp.b = null; cmp.winner = null; cmpSave(); $("cmp-out").textContent = ""; openPicker("a", false); window.scrollTo(0, 0); });
+    acts.appendChild(again);
+    acts.appendChild(reset);
+    card.appendChild(acts);
+    out.appendChild(card);
+  }
+
+  var cmpReady = true;
+  if (!$("panel-compare").hidden) cmpEnter();
+
   /* Organic alternatives in the same category, sold in the chosen country */
   var COUNTRY_TAG = { us: "en:united-states", in: "en:india", au: "en:australia", gb: "en:united-kingdom" };
   var AMAZON_HOST = { us: "www.amazon.com", in: "www.amazon.in", au: "www.amazon.com.au", gb: "www.amazon.co.uk" };
@@ -1639,7 +2118,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     wrap.appendChild(el("h3", "", "Organic options in this category"));
     var status = el("p", "note", "Looking for organic alternatives…");
     wrap.appendChild(status);
-    var go = card.querySelector(".linkish");
+    var go = card.querySelector(".linkish:not(.cmp-start)");
     card.insertBefore(wrap, go || null);
     var base = "/api/off-search?page_size=6&sort_by=-unique_scans_n&fields=code,product_name,brands,image_front_small_url&q=";
     function query(cat, withCountry) {
