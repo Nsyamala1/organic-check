@@ -1,7 +1,7 @@
 {
   "name": "Organic Check",
   "short_name": "Organic Check",
-  "description": "Scan food to check organic labels, additives, allergens and more.",
+  "description": "Scan any food to see its additives, how processed it is and whether it is organic. Compare two products.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

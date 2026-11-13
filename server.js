@@ -62,6 +62,37 @@ async function offSearch(req, res) {
   } catch (e) { json(502, { error: "search unreachable" }); }
 }
 
+/* USDA FoodData Central lookup by barcode. Needs a free api.data.gov key in FDC_API_KEY; without one the page asks USDA directly. */
+const fdcCache = new Map();
+const FDC_BASE = process.env.FDC_BASE || "https://api.nal.usda.gov";
+async function fdc(req, res) {
+  const json = (code, obj, cache) => { if (res.headersSent) return; res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": cache ? "public, max-age=86400" : "no-store" }); res.end(JSON.stringify(obj)); };
+  const upc = (new URL(req.url, "http://local").searchParams.get("upc") || "").trim();
+  if (!/^\d{8,14}$/.test(upc)) return json(400, { error: "bad barcode" });
+  const key = process.env.FDC_API_KEY;
+  if (!key) return json(503, { error: "nokey" });
+  const want = upc.replace(/^0+/, "");
+  const hit = fdcCache.get(want);
+  if (hit && Date.now() - hit.at < 24 * 3600e3) return json(200, hit.data, true);
+  try {
+    /* USDA stores barcodes with varying zero padding and matches whole tokens, so try the common lengths */
+    const forms = [...new Set([want.padStart(12, "0"), want.padStart(14, "0"), want.padStart(13, "0"), upc])];
+    let foods = [];
+    for (const q of forms) {
+      const r = await fetch(FDC_BASE + "/fdc/v1/foods/search?dataType=Branded&pageSize=5&query=" + q + "&api_key=" + encodeURIComponent(key), { signal: AbortSignal.timeout(10000) });
+      if (!r.ok) return json(502, { error: "usda unavailable" });
+      const d = await r.json();
+      foods = (d.foods || []).filter((f) => String(f.gtinUpc || "").replace(/\D/g, "").replace(/^0+/, "") === want).slice(0, 1)
+        .map((f) => ({ gtinUpc: f.gtinUpc, description: f.description, brandName: f.brandName, brandOwner: f.brandOwner, ingredients: f.ingredients, foodNutrients: (f.foodNutrients || []).map((n) => ({ nutrientId: n.nutrientId, value: n.value })) }));
+      if (foods.length) break;
+    }
+    const data = { foods };
+    if (fdcCache.size > 2000) fdcCache.clear();
+    fdcCache.set(want, { at: Date.now(), data });
+    json(200, data, true);
+  } catch (e) { json(502, { error: "usda unreachable" }); }
+}
+
 /* Exchange rates (open.er-api.com, free, attribution required), cached 6h */
 const fxCache = new Map();
 async function fx(req, res) {
@@ -183,6 +214,7 @@ http.createServer((req, res) => {
   if (p === "/api/in-company") return inCompany(req, res);
   if (p === "/api/read-menu") return readMenu(req, res);
   if (p === "/api/off-search") return offSearch(req, res);
+  if (p === "/api/fdc") return fdc(req, res);
   if (p === "/api/fx") return fx(req, res);
   if (p === "/") p = "/index.html";
   const file = path.join(root, path.normalize(p));
