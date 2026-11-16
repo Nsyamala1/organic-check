@@ -46,7 +46,7 @@ async function offSearch(req, res) {
   const u = new URL(req.url, "http://local").searchParams;
   const q = (u.get("q") || "").slice(0, 300).trim();
   if (q.length < 2) return json(400, { error: "query too short" });
-  const size = Math.min(10, Math.max(1, Number(u.get("page_size")) || 8));
+  const size = Math.min(20, Math.max(1, Number(u.get("page_size")) || 8));
   const fields = /^[a-z_,]{1,200}$/.test(u.get("fields") || "") ? u.get("fields") : "code,product_name,brands";
   const sort = u.get("sort_by") === "-unique_scans_n" ? "&sort_by=-unique_scans_n" : "";
   const url = "https://search.openfoodfacts.org/search?q=" + encodeURIComponent(q) + "&page_size=" + size + "&fields=" + fields + sort;

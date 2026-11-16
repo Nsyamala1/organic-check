@@ -237,7 +237,14 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
 #prefs summary .count { font: 500 0.78rem var(--font-mono); color: var(--muted); }
 #prefs[open] summary { margin-bottom: 6px; }
 .prefs-body { display: flex; flex-direction: column; gap: 12px; padding-bottom: 16px; }
-.prefs-body h3 { margin: 0; font: 600 0.82rem var(--font-body); color: var(--muted); }
+.prefs-body h3, .welcome-body h3 { margin: 0; font: 600 0.82rem var(--font-body); color: var(--muted); }
+#welcome { width: min(100vw, 520px); max-width: 100vw; max-height: 88dvh; margin: auto auto 0; padding: 0; border: 0; border-radius: 24px 24px 0 0; background: var(--surface); color: var(--ink); overflow-y: auto; overscroll-behavior: contain; }
+#welcome::backdrop { background: rgba(10, 20, 14, 0.55); }
+.welcome-body { display: flex; flex-direction: column; gap: 12px; padding: 22px 18px calc(18px + env(safe-area-inset-bottom)); }
+.welcome-body h2 { margin: 0; font: 800 1.5rem/1.15 var(--font-display); }
+.welcome-body .note { margin: 0; }
+.welcome-acts { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0 0; background: var(--surface); }
+@media (min-width: 600px) { #welcome { margin: auto; border-radius: 24px; } }
 .toggles { display: flex; flex-wrap: wrap; gap: 8px; }
 .toggles label { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 14px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: 500 0.88rem var(--font-body); cursor: pointer; }
 .toggles input { width: 18px; height: 18px; margin: 0; accent-color: var(--leaf); }
@@ -248,12 +255,15 @@ button.linkish { align-self: flex-start; min-height: 44px; padding: 10px 18px; b
 .alts { display: flex; flex-direction: column; gap: 8px; }
 .alts h3 { margin: 0; font: 700 1rem var(--font-display); }
 .alt { display: flex; gap: 12px; align-items: center; width: 100%; min-height: 56px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: 500 0.92rem var(--font-body); text-align: left; cursor: pointer; }
-.alt-row { display: flex; align-items: stretch; gap: 8px; }
-.alt-row .alt { flex: 1; min-width: 0; width: auto; }
+.alt-row { display: flex; align-items: center; gap: 8px; }
+.alt-row button.alt { flex: 1; min-width: 0; width: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); font: 500 0.92rem var(--font-body); }
+.alt-name { font-weight: 600; }
 .find-online { flex: none; display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 8px 14px; border: 1.5px solid var(--leaf); border-radius: 14px; color: var(--leaf); font: 600 0.85rem var(--font-body); text-decoration: none; text-align: center; }
 @media (hover: hover) { .find-online:hover { background: var(--good-bg); } }
 .alt img, .hist img { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; background: #fff; flex: none; }
 .alt span, .hist span { min-width: 0; overflow-wrap: anywhere; }
+.alt-text { display: flex; flex-direction: column; gap: 2px; }
+.alt-why { font: 600 0.8rem/1.35 var(--font-body); color: var(--good); }
 #history { display: flex; flex-direction: column; gap: 8px; }
 #history .hist-head { display: flex; align-items: center; justify-content: space-between; }
 #history h2 { font: 700 1.05rem var(--font-display); }
@@ -451,15 +461,17 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     <button type="button" class="linkish" id="alc-link">Wine, beer or spirits? Check the producer</button>
     <p class="offline" id="offline-note" hidden>You are offline. Products you scanned before still open; new ones need a connection.</p>
     <div id="out" aria-live="polite"></div>
-    <details class="card" id="prefs"><summary><span>My food alerts</span><span class="count" id="prefs-count">Off</span></summary>
+    <details class="card" id="prefs"><summary><span>My profile</span><span class="count" id="prefs-count">Off</span></summary>
       <div class="prefs-body">
-        <p class="note">Pick what you avoid. Product scans and comparisons will warn you when something matches. Settings stay on this phone.</p>
+        <p class="note">Pick what you avoid. Every scan and comparison then tells you whether a product fits you. Your choices stay on this phone.</p>
         <h3>Diet</h3>
         <div class="toggles" id="prefs-diet"></div>
         <h3>Allergens</h3>
         <div class="toggles" id="prefs-allergens"></div>
         <h3>Meat and alcohol</h3>
         <div class="toggles" id="prefs-meat"></div>
+        <h3>Things to avoid</h3>
+        <div class="toggles" id="prefs-avoid"></div>
       </div>
     </details>
     <div id="history" hidden></div>
@@ -631,6 +643,22 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   </main>
 </div>
 
+<dialog id="welcome" aria-labelledby="welcome-title">
+  <form method="dialog" class="welcome-body">
+    <h2 id="welcome-title">Make it yours</h2>
+    <p class="note">Tell us what you avoid and every scan will say whether a product fits you. Pick any, or none. Your choices stay on this phone and you can change them later in My profile.</p>
+    <h3>Allergies</h3>
+    <div class="toggles" id="ob-allergens"></div>
+    <h3>Diet</h3>
+    <div class="toggles" id="ob-diet"></div>
+    <h3>Things to avoid</h3>
+    <div class="toggles" id="ob-avoid"></div>
+    <div class="welcome-acts">
+      <button type="submit" class="textbtn" value="skip">Skip for now</button>
+      <button type="submit" class="go" value="save">Done</button>
+    </div>
+  </form>
+</dialog>
 <script src="barcode-detector.js"></script>
 <script src="additives-data.js"></script>
 <script src="plu-data.js"></script>
@@ -760,7 +788,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (!isAlc) facts.appendChild(fact("Nutri-Score", grade ? grade.toUpperCase() : "Not rated", grade ? "A is best, E is worst" : /not-applicable/.test(p.nutriscore_grade || "") ? "Doesn't apply to this type of product" : p._usda ? "Open Food Facts hasn't rated this product" : "Needs nutrition facts in the database", gradeTone));
     card.appendChild(facts);
     /* At a glance: the whole verdict in one line, organic first but not alone */
-    var chip = function (text, tone) { glance.appendChild(el("li", tone || "", text)); };
+    var chipSeen = {};
+    var chip = function (text, tone) { var k = text.toLowerCase(); if (chipSeen[k]) return; chipSeen[k] = 1; glance.appendChild(el("li", tone || "", text)); };
     chip(organic.length ? "Organic" : thin ? "Organic status unknown" : "No organic label", organic.length ? "good" : thin ? "unk" : "");
     if (!isAlc && nova) chip(NOVA_SHORT[nova], novaTone);
     if (additives.length) chip(additives.length + (additives.length === 1 ? " additive" : " additives") + (risky.length ? ", " + risky.length + " to watch" : ""), addTone);
@@ -770,6 +799,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (ai) {
       ai.bad.forEach(function (t) { chip(t.charAt(0).toUpperCase() + t.slice(1), "bad"); });
       if (ai.trace.length) chip("May contain " + ai.trace.join(", "), "mid");
+      if (!ai.bad.length && !ai.trace.length) chip(ai.unsure.length ? "Fits you as far as we can tell" : "Fits your profile", ai.unsure.length ? "" : "good");
     }
     if (isAlc) card.appendChild(el("p", "note", ALC_SHORT));
     var cmpBtn = el("button", "linkish cmp-start");
@@ -836,7 +866,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     out.appendChild(card);
     reveal(card);
     saveHistory(p, organic.length > 0);
-    if (!organic.length && !isAlc) loadAlternatives(p, card);
+    if (!isAlc) loadAlternatives(p, card, organic.length > 0);
   }
 
   /* Nutrient traffic lights, nutrition table, NOVA markers, labels */
@@ -1442,7 +1472,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       plu: "Not every shop uses these stickers, especially on loose or local produce.",
       lists: "PAN UK's 2024 Dirty Dozen, based on UK government tests that found residues of more than one pesticide. See pan-uk.org for the latest list.", dirty: UK_DIRTY, dirtyTitle: "UK Dirty Dozen: buy organic", noClean: true }
   };
-  var ALC_RE = /alcoholic-beverages|\ben:(beers|wines|spirits|ciders|liqueurs|sakes)\b/;
+  var ALC_RE = /\ben:(alcoholic-beverages|beers|wines|spirits|ciders|liqueurs|sakes)\b/;
   var ALC_SHORT = "Alcohol: barcode data is often incomplete, so check the producer as well.";
   COUNTRIES.us.alc = [
     "Barcode data for alcohol is thin, so search the winery, brewery or distillery name below. The list covers producers, not individual bottles.",
@@ -1725,26 +1755,30 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   var DIET = [["vegetarian", "Vegetarian"], ["vegan", "Vegan"], ["palm", "No palm oil"], ["gluten", "Gluten-free"]];
   var MEATS = [["pork", "No pork"], ["beef", "No beef"], ["chicken", "No chicken or poultry"], ["lamb", "No lamb"], ["alcohol", "No alcohol"]];
   var ALLERGENS = [["milk", "Milk"], ["eggs", "Eggs"], ["nuts", "Tree nuts"], ["peanuts", "Peanuts"], ["soybeans", "Soy"], ["fish", "Fish"], ["crustaceans", "Shellfish"], ["sesame-seeds", "Sesame"], ["mustard", "Mustard"]];
+  var AVOID = [["dyes", "Artificial colors"], ["sweeteners", "Artificial sweeteners"], ["highsugar", "High sugar"], ["upf", "Ultra-processed food"]];
+  var DYE_CODES = ["e102", "e104", "e110", "e122", "e123", "e124", "e127", "e129", "e131", "e132", "e133", "e142", "e143", "e151", "e155"];
+  var SWEETENER_CODES = ["e950", "e951", "e952", "e954", "e955", "e961", "e962", "e969"];
   var prefs = {};
   try { prefs = JSON.parse(localStorage.getItem(PREF_KEY) || "{}") || {}; } catch (e) { prefs = {}; }
   function prefsOn() { return Object.keys(prefs).filter(function (k) { return prefs[k]; }); }
-  function drawPrefs() {
-    [["prefs-diet", DIET], ["prefs-allergens", ALLERGENS], ["prefs-meat", MEATS]].forEach(function (g) {
-      var box = $(g[0]);
-      box.textContent = "";
-      g[1].forEach(function (it) {
-        var lab = el("label"), cb = el("input");
-        cb.type = "checkbox"; cb.name = "pref-" + it[0]; cb.checked = !!prefs[it[0]];
-        cb.addEventListener("change", function () {
-          prefs[it[0]] = cb.checked;
-          try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {}
-          countPrefs();
-        });
-        lab.appendChild(cb);
-        lab.appendChild(document.createTextNode(it[1]));
-        box.appendChild(lab);
+  function drawToggles(boxId, items) {
+    var box = $(boxId);
+    box.textContent = "";
+    items.forEach(function (it) {
+      var lab = el("label"), cb = el("input");
+      cb.type = "checkbox"; cb.name = boxId + "-" + it[0]; cb.checked = !!prefs[it[0]];
+      cb.addEventListener("change", function () {
+        prefs[it[0]] = cb.checked;
+        try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {}
+        countPrefs();
       });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(it[1]));
+      box.appendChild(lab);
     });
+  }
+  function drawPrefs() {
+    drawToggles("prefs-diet", DIET); drawToggles("prefs-allergens", ALLERGENS); drawToggles("prefs-meat", MEATS); drawToggles("prefs-avoid", AVOID);
     countPrefs();
   }
   function countPrefs() { var n = prefsOn().length; $("prefs-count").textContent = n ? n + " on" : "Off"; }
@@ -1780,6 +1814,17 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       if (!ing) { unsure.push(m[1].replace(/^No /, "").toLowerCase()); return; }
       if (MEAT_RE[m[0]].test(ing)) bad.push("ingredients mention " + m[1].replace(/^No /, "").toLowerCase());
     });
+    var codes = (p.additives_tags || []).map(function (t) { return String(t).replace(/^en:/, "").toLowerCase().replace(/^(e\d+)[a-z]*$/, "$1"); });
+    /* A NOVA group means the ingredient list was analysed, even when the list itself was not fetched */
+    var knowsAdds = !!ing || codes.length > 0 || Number(p.nova_group) > 0;
+    var hit = function (set) { return codes.some(function (c) { return set.indexOf(c) !== -1; }); };
+    if (prefs.dyes) { if (hit(DYE_CODES)) bad.push("has artificial colors"); else if (!knowsAdds) unsure.push("artificial colors"); }
+    if (prefs.sweeteners) { if (hit(SWEETENER_CODES)) bad.push("has artificial sweeteners"); else if (!knowsAdds) unsure.push("artificial sweeteners"); }
+    if (prefs.highsugar) {
+      var sg = p.nutriments && p.nutriments.sugars_100g, lvl = p.nutrient_levels && p.nutrient_levels.sugars;
+      if (lvl === "high" || typeof sg === "number" && sg > 22.5) bad.push("high in sugar"); else if (!lvl && typeof sg !== "number") unsure.push("sugar");
+    }
+    if (prefs.upf) { var ng = Number(p.nova_group); if (ng === 4) bad.push("ultra-processed"); else if (!(ng >= 1 && ng <= 3)) unsure.push("processing level"); }
     return { bad: bad, trace: trace, unsure: unsure };
   }
   function alertsFor(p) {
@@ -1789,7 +1834,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     var box = el("div", "alerts");
     if (bad.length) {
       var f = el("div", "flag high");
-      f.appendChild(el("strong", "", "Matches your alerts"));
+      f.appendChild(el("strong", "", "Not for you"));
       f.appendChild(el("span", "", bad.join(", ").replace(/^./, function (c) { return c.toUpperCase(); }) + "."));
       box.appendChild(f);
     }
@@ -1801,7 +1846,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     }
     if (!bad.length && !trace.length) {
       var ok = el("div", "flag low");
-      ok.appendChild(el("strong", "", "No conflict with your alerts"));
+      ok.appendChild(el("strong", "", "Fits your profile"));
       ok.appendChild(el("span", "", unsure.length ? "Open Food Facts has no data on " + unsure.join(", ") + ", so check the label." : "Based on the ingredients and allergens recorded. Always check the label."));
       box.appendChild(ok);
     } else if (unsure.length) {
@@ -2107,7 +2152,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       };
       var ab = A.alerts.bad.length > 0, bb = B.alerts.bad.length > 0, at = A.alerts.trace.length > 0, bt = B.alerts.trace.length > 0;
       var awin = ab !== bb ? (ab ? "b" : "a") : !ab && at !== bt ? (at ? "b" : "a") : "tie";
-      addRow("Your alerts", aw, awin, ab !== bb ? 0 : 1, function () { return "no trace warnings for your alerts"; }, true);
+      addRow("Your profile", aw, awin, ab !== bb ? 0 : 1, function () { return "no trace warnings for your profile"; }, true);
     }
     addRow("Organic label", function (x) { return x.organic === null ? nd("Unknown") : x.organic ? [x.orgName] : ["None listed"]; },
       A.organic === null || B.organic === null ? null : A.organic === B.organic ? "tie" : A.organic ? "a" : "b", 2, function () { return "organic"; });
@@ -2142,11 +2187,11 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     /* Verdict */
     var score = { a: 0, b: 0 }, why = { a: [], b: [] }, judged = 0;
     rows.forEach(function (r) {
-      if (r.label === "Your alerts" || r.win === "info") return;
+      if (r.label === "Your profile" || r.win === "info") return;
       if (r.win === "a" || r.win === "b" || r.win === "tie") judged++;
       if ((r.win === "a" || r.win === "b") && r.weight) { score[r.win] += r.weight; why[r.win].push(r.why(r.win)); }
     });
-    rows.forEach(function (r) { if (r.label === "Your alerts" && r.weight && (r.win === "a" || r.win === "b")) { score[r.win] += 1; why[r.win].push(r.why(r.win)); } });
+    rows.forEach(function (r) { if (r.label === "Your profile" && r.weight && (r.win === "a" || r.win === "b")) { score[r.win] += 1; why[r.win].push(r.why(r.win)); } });
     var badA = A.alerts && A.alerts.bad.length > 0, badB = B.alerts && B.alerts.bad.length > 0;
     var winner = null, tone = "", title = "", text = "", extra = "";
     var dataCount = function (x) { return [x.organic, x.nova, x.adds, x.grade, x.sugar, x.satfat, x.salt, x.protein].filter(function (v) { return v !== null; }).length; };
@@ -2155,7 +2200,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       var L = other(winner);
       tone = "";
       title = shortName(P[winner]) + " is the better pick for you";
-      text = shortName(P[L]) + " matches your alerts: " + F[L].alerts.bad.join(", ") + ".";
+      text = shortName(P[L]) + " doesn't fit your profile: " + F[L].alerts.bad.join(", ") + ".";
       if (why[winner].length) extra = cap(why[winner].slice(0, 3).join(", ")) + " too.";
     } else if (judged < 3) {
       tone = "unk";
@@ -2186,7 +2231,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     card.appendChild(v);
     if (badA && badB) {
       var f = el("div", "flag high");
-      f.appendChild(el("strong", "", "Both match your alerts"));
+      f.appendChild(el("strong", "", "Neither fits your profile"));
       f.appendChild(el("span", "", shortName(P.a) + ": " + A.alerts.bad.join(", ") + ". " + shortName(P.b) + ": " + B.alerts.bad.join(", ") + "."));
       card.appendChild(f);
     }
@@ -2259,42 +2304,123 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     out.appendChild(card);
   }
 
+  /* First launch: offer to set up a profile, once. Not shown over a shared comparison link. */
+  (function () {
+    var dlg = $("welcome"), seen = true;
+    try { seen = !!localStorage.getItem("oc-welcome"); } catch (e) {}
+    if (seen || cmpLink || typeof dlg.showModal !== "function") return;
+    drawToggles("ob-allergens", ALLERGENS); drawToggles("ob-diet", DIET); drawToggles("ob-avoid", AVOID);
+    dlg.addEventListener("close", function () {
+      try { localStorage.setItem("oc-welcome", "1"); } catch (e) {}
+      drawPrefs();
+    });
+    try { dlg.showModal(); } catch (e) {}
+  })();
+
   var cmpReady = true;
   if (!$("panel-compare").hidden) cmpEnter();
 
-  /* Organic alternatives in the same category, sold in the chosen country */
+  /* Better picks in the same category: less processed, a better Nutri-Score or organic, and nothing your profile rules out.
+     Falls back to organic options when there is nothing to rank on. */
   var COUNTRY_TAG = { us: "en:united-states", in: "en:india", au: "en:australia", gb: "en:united-kingdom" };
   var AMAZON_HOST = { us: "www.amazon.com", in: "www.amazon.in", au: "www.amazon.com.au", gb: "www.amazon.co.uk" };
-  function loadAlternatives(p, card) {
-    var cats = (p.categories_tags || []).filter(function (c) { return /^en:[a-z0-9-]+$/.test(c); }).reverse().slice(0, 3);
+  function loadAlternatives(p, card, isOrganic) {
+    /* The first two category levels ("snacks", "beverages") are too broad to compare within */
+    var cats = (p.categories_tags || []).filter(function (c) { return /^en:[a-z0-9-]+$/.test(c); }).slice(2).reverse();
     if (!cats.length) return;
+    var nova = Number(p.nova_group), grade = (p.nutriscore_grade || "").toLowerCase();
+    if (!(nova >= 1 && nova <= 4)) nova = 0;
+    if (!/^[a-e]$/.test(grade)) grade = "";
+    var myAdds = p.ingredients_text || (p.additives_tags || []).length ? (p.additives_tags || []).length : null;
+    /* What "better" means here: a lower NOVA group when we know it, otherwise a better Nutri-Score, otherwise organic */
+    var want = nova > 2 ? "nova_group:[1 TO " + (nova - 1) + "]"
+      : nova ? ""   /* unprocessed or a plain cooking ingredient: nothing to improve on */
+      : grade > "a" ? "nutriscore_grade:(" + "abcde".slice(0, "abcde".indexOf(grade)).split("").join(" OR ") + ")"
+      : !nova && !grade && !isOrganic ? 'labels_tags:"en:organic"' : "";
+    var organicOnly = want.indexOf("labels_tags") === 0;
+    /* An ultra-processed product can look one level wider; anything better than that only among its own kind */
+    cats = cats.slice(0, organicOnly ? 3 : nova === 4 || !nova ? 2 : 1);
+    if (!want) {
+      if (nova || grade) {
+        var ok = el("div", "alts");
+        ok.appendChild(el("h3", "", "Better picks in this category"));
+        ok.appendChild(el("p", "note", "This is already one of the better picks of its kind: " + (nova ? NOVA_SHORT[nova].toLowerCase() : "") + (nova && grade ? ", " : "") + (grade ? "Nutri-Score " + grade.toUpperCase() : "") + "."));
+        card.insertBefore(ok, card.querySelector(".linkish:not(.cmp-start)") || null);
+      }
+      return;
+    }
     var wrap = el("div", "alts");
-    wrap.appendChild(el("h3", "", "Organic options in this category"));
-    var status = el("p", "note", "Looking for organic alternatives…");
+    wrap.appendChild(el("h3", "", organicOnly ? "Organic options in this category" : "Better picks in this category"));
+    var status = el("p", "note", organicOnly ? "Looking for organic alternatives…" : "Looking for better picks…");
     wrap.appendChild(status);
-    var go = card.querySelector(".linkish:not(.cmp-start)");
-    card.insertBefore(wrap, go || null);
-    var base = "/api/off-search?page_size=6&sort_by=-unique_scans_n&fields=code,product_name,brands,image_front_small_url&q=";
+    card.insertBefore(wrap, card.querySelector(".linkish:not(.cmp-start)") || null);
+    var base = "/api/off-search?page_size=20&sort_by=-unique_scans_n&fields=code,product_name,brands,image_front_small_url,nova_group,nutriscore_grade,additives_tags,labels_tags,allergens_tags,traces_tags,ingredients_analysis_tags,nutrient_levels&q=";
+    function facts(x) {
+      var n = Number(x.nova_group), g = String(x.nutriscore_grade || "").toLowerCase();
+      return { nova: n >= 1 && n <= 4 ? n : 0, grade: /^[a-e]$/.test(g) ? g : "", organic: (x.labels_tags || []).some(function (t) { return ORGANIC_TAGS.indexOf(t) !== -1; }), adds: Array.isArray(x.additives_tags) ? x.additives_tags.length : null };
+    }
     function query(cat, withCountry) {
-      var q = 'categories_tags:"' + cat + '" AND labels_tags:"en:organic"' + (withCountry ? ' AND countries_tags:"' + COUNTRY_TAG[country] + '"' : "");
+      var q = 'categories_tags:"' + cat + '" AND ' + want + (withCountry ? ' AND countries_tags:"' + COUNTRY_TAG[country] + '" AND lang:"en"' : "");
       return fetchJson(base + encodeURIComponent(q)).then(function (d) {
-        return (d.hits || []).filter(function (x) { return x.code && x.code !== p.code && x.product_name; });
+        var seen = {};
+        return (d.hits || []).filter(function (x) {
+          if (!x.code || x.code === p.code || !x.product_name) return false;
+          if (!organicOnly && (!x.image_front_small_url || !String(Array.isArray(x.brands) ? x.brands[0] || "" : x.brands || "").trim())) return false; /* skip half-entered records */
+          var key = (String(Array.isArray(x.brands) ? x.brands[0] : x.brands || "") + "|" + x.product_name).toLowerCase();
+          if (seen[key] || key.split("|")[1] === pName(p).toLowerCase() && key.split("|")[0] === String((p.brands || "").split(",")[0]).trim().toLowerCase()) return false;
+          seen[key] = 1;
+          if (organicOnly) return true;
+          var f = facts(x);
+          if (nova && f.nova && f.nova > nova) return false;         /* never more processed */
+          if (grade && f.grade && f.grade > grade) return false;     /* never a worse Nutri-Score */
+          if (!(nova && f.nova && f.nova < nova) && !(grade && f.grade && f.grade < grade)) return false;
+          var ai = alertInfo(x);                                    /* nothing your profile rules out */
+          return !(ai && ai.bad.length);
+        });
       });
     }
-    var tries = [];
-    cats.forEach(function (c, i) { tries.push([c, true]); if (i < 2) tries.push([c, false]); });
-    (function attempt(i) {
-      if (i >= tries.length) { status.textContent = "No organic alternatives found in this category yet."; return; }
-      query(tries[i][0], tries[i][1]).then(function (list) {
-        if (!list.length) return attempt(i + 1);
+    function rank(list) {
+      if (organicOnly) return list;
+      var score = function (x) { var f = facts(x); return (f.nova || 3) * 2 + (f.grade ? "abcde".indexOf(f.grade) : 2) - (f.organic ? 1 : 0) + (f.adds ? Math.min(f.adds, 4) * 0.25 : 0); };
+      return list.map(function (x, i) { return [score(x), i, x]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (r) { return r[2]; });
+    }
+    function why(x) {
+      var f = facts(x), r = [];
+      if (nova && f.nova && f.nova < nova) r.push("Less processed");
+      if (f.grade && (!grade || f.grade < grade)) r.push("Nutri-Score " + f.grade.toUpperCase());
+      if (f.organic && !isOrganic) r.push("Organic");
+      if (myAdds !== null && f.adds !== null && f.adds < myAdds) r.push(f.adds === 0 ? "No additives" : (myAdds - f.adds) + " fewer additive" + (myAdds - f.adds === 1 ? "" : "s"));
+      return r.join(" · ");
+    }
+    /* Collect from the most specific category outward, staying in the chosen country; only look abroad when that finds nothing */
+    var max = organicOnly ? 4 : 3, picked = [], have = {};
+    function gather(list) {
+      rank(list).forEach(function (x) { if (!have[x.code] && picked.length < max) { have[x.code] = 1; picked.push(x); } });
+    }
+    function collect(i, withCountry) {
+      if (picked.length >= max || i >= (withCountry ? cats.length : Math.min(2, cats.length))) return Promise.resolve();
+      return query(cats[i], withCountry).then(gather).then(function () { return collect(i + 1, withCountry); });
+    }
+    var abroad = false;
+    collect(0, true).then(function () {
+      if (picked.length) return;
+      abroad = true;
+      return collect(0, false);
+    }).then(function () {
+        if (!picked.length) { status.textContent = organicOnly ? "No organic alternatives found in this category yet." : nova && nova < 4 ? "No clearly better pick of this kind found. This one is already less processed than most." : "No better picks found in this category yet."; return; }
         status.remove();
-        if (!tries[i][1]) wrap.appendChild(el("p", "note", "None recorded for your country, so these may be sold elsewhere."));
-        list.slice(0, 4).forEach(function (x) {
+        if (!organicOnly && prefsOn().length) wrap.appendChild(el("p", "note", "Picks that don't fit your profile are left out."));
+        if (abroad) wrap.appendChild(el("p", "note", "None recorded for your country, so these may be sold elsewhere."));
+        picked.forEach(function (x) {
           var b = el("button", "alt");
           b.type = "button";
           if (x.image_front_small_url) { var im = el("img"); im.src = x.image_front_small_url; im.alt = ""; im.loading = "lazy"; b.appendChild(im); }
-          var brand = Array.isArray(x.brands) ? x.brands[0] : (x.brands || "").split(",")[0];
-          b.appendChild(el("span", "", x.product_name + (brand ? " (" + brand + ")" : "")));
+          var brand = String(Array.isArray(x.brands) ? x.brands[0] : (x.brands || "").split(",")[0]).trim();
+          var txt = el("span", "alt-text");
+          txt.appendChild(el("span", "alt-name", x.product_name + (brand ? " (" + brand + ")" : "")));
+          var reason = organicOnly ? "" : why(x);
+          if (reason) txt.appendChild(el("span", "alt-why", reason));
+          b.appendChild(txt);
           b.addEventListener("click", function () { $("q").value = x.code; lookupCode(x.code); window.scrollTo(0, 0); });
           var row = el("div", "alt-row");
           row.appendChild(b);
@@ -2307,8 +2433,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
           row.appendChild(find);
           wrap.appendChild(row);
         });
-      }).catch(function () { status.textContent = "Alternatives could not load right now."; });
-    })(0);
+    }).catch(function () { status.textContent = "Alternatives could not load right now."; });
   }
 
   /* Offline support */
@@ -2551,8 +2676,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (bits.length) head.appendChild(el("p", "note", bits.join(", ") + "."));
     var hasPrefs = prefsOn().filter(function (k) { return k !== "palm"; }).length > 0;
     var safeN = all.filter(function (x) { return !x._alerts.red.length; }).length;
-    if (hasPrefs) head.appendChild(el("p", "", safeN + " of " + all.length + " items fit your food alerts" + (safeN ? "." : ". Show the note below to the staff and ask for options.")));
-    else head.appendChild(el("p", "note", "Tip: turn on My food alerts in the Packaged food tab to have each dish checked for you."));
+    if (hasPrefs) head.appendChild(el("p", "", safeN + " of " + all.length + " items fit your profile" + (safeN ? "." : ". Show the note below to the staff and ask for options.")));
+    else head.appendChild(el("p", "note", "Tip: set up My profile in the Packaged food tab to have each dish checked for you."));
     out.appendChild(head);
 
     var acts = el("div", "menu-actions");
@@ -2706,7 +2831,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   function pickForMe(box, cards) {
     var pool = menu.dishes.filter(function (x) { return x.type !== "drink" && !x._alerts.red.length; });
     box.textContent = "";
-    if (!pool.length) { box.appendChild(el("p", "err", "No dish fits your food alerts. Show the staff note and ask what they can make.")); return; }
+    if (!pool.length) { box.appendChild(el("p", "err", "No dish fits your profile. Show the staff note and ask what they can make.")); return; }
     var scored = pool.map(function (x) {
       var s = Math.random();
       if (x._alerts.amber.length) s -= 2;
@@ -2724,7 +2849,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       b.addEventListener("click", function () { x._card.hidden = false; x._card.scrollIntoView({ block: "start", behavior: "smooth" }); });
       li.appendChild(b);
       var why = [];
-      if (prefsOn().length) why.push("fits your food alerts");
+      if (prefsOn().length) why.push("fits your profile");
       if (x._alerts.amber.length) why.push("ask about " + x._alerts.amber.map(function (a) { return a.what; }).join(", "));
       why.push(SPICE[Math.max(0, Math.min(3, Number(x.spice) || 0))].toLowerCase());
       if (Number(x.kcal_low) > 0) why.push("about " + x.kcal_low + "-" + x.kcal_high + " kcal");
