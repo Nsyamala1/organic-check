@@ -134,6 +134,9 @@ button.alt { padding: 10px 16px; border-radius: 999px; font: 600 0.92rem var(--f
 .prod img { width: 72px; height: 72px; object-fit: contain; border-radius: 12px; background: #fff; border: 1px solid var(--line); flex: none; }
 .prod .name { font: 700 1.2rem/1.2 var(--font-display); overflow-wrap: anywhere; text-wrap: balance; }
 .prod .brand { color: var(--muted); font-size: 0.9rem; }
+.fixit { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1.5px dashed var(--line); border-radius: 14px; font-size: 0.9rem; color: var(--muted); }
+.fixit strong { font: 700 1rem var(--font-display); color: var(--ink); }
+.fixit a { align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; font-weight: 600; color: var(--leaf); }
 .glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .glance li { padding: 6px 12px; border-radius: 999px; font: 600 0.88rem/1.25 var(--font-body); background: var(--bg); color: var(--muted); border: 1px solid transparent; }
 .glance li.good { background: var(--good-bg); color: var(--good); }
@@ -335,7 +338,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 
 /* Product detail: nutrient levels, nutrition table, labels */
 .levels { display: flex; flex-wrap: wrap; gap: 6px; }
-.lvl { padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; }
+.lvl { padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; background: var(--bg); color: var(--muted); }
 .lvl.low { background: var(--good-bg); color: var(--good); }
 .lvl.moderate { background: var(--mid-bg); color: var(--mid); }
 .lvl.high { background: var(--bad-bg); color: var(--bad); }
@@ -802,6 +805,22 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       if (!ai.bad.length && !ai.trace.length) chip(ai.unsure.length ? "Fits you as far as we can tell" : "Fits your profile", ai.unsure.length ? "" : "good");
     }
     if (isAlc) card.appendChild(el("p", "note", ALC_SHORT));
+    var missing = [];
+    if (!p.image_front_small_url) missing.push("a photo");
+    if (!p.ingredients_text || p._usda) missing.push("ingredients");
+    if (thin || !tags.length) missing.push("labels");
+    if (typeof (p.nutriments || {}).sugars_100g !== "number" || p._usda) missing.push("nutrition facts");
+    if (/^\d{8,14}$/.test(String(p.code || "")) && (thin || !p.ingredients_text || p._usda || (!nova && !isAlc))) {
+      var fix = el("div", "fixit");
+      fix.appendChild(el("strong", "", "Help complete this product"));
+      fix.appendChild(el("span", "", "Open Food Facts is missing " + (missing.length ? missing.join(", ").replace(/, ([^,]*)$/, " and $1") : "some details") + ". Add photos of the pack there and the ratings will appear here for everyone, usually within a day. It needs a free Open Food Facts account."));
+      var fa = el("a", "", "Add photos on Open Food Facts");
+      fa.href = "https://world.openfoodfacts.org/cgi/product.pl?type=edit&code=" + encodeURIComponent(p.code);
+      fa.target = "_blank"; fa.rel = "noopener noreferrer";
+      fa.setAttribute("aria-label", "Add photos on Open Food Facts (opens in a new tab)");
+      fix.appendChild(fa);
+      card.appendChild(fix);
+    }
     var cmpBtn = el("button", "linkish cmp-start");
     cmpBtn.type = "button";
     cmpBtn.appendChild(el("span", "", "Compare with another product"));
@@ -816,6 +835,11 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (!isAlc) {
       var lv = productLevels(p);
       if (lv) card.appendChild(lv);
+      var sus = suspectNutrients(p);
+      if (sus) {
+        var SUS_NAMES = { fat: "fat", "saturated-fat": "saturated fat", carbohydrates: "carbohydrates", sugars: "sugar", proteins: "protein", salt: "salt", fiber: "fiber", "energy-kcal": "calories" };
+        card.appendChild(el("p", "note", "The " + Object.keys(sus).map(function (k) { return SUS_NAMES[k]; }).join(", ").replace(/, ([^,]*)$/, " and $1") + " figure" + (Object.keys(sus).length > 1 ? "s" : "") + " in the database can't be right for this product, so we've left " + (Object.keys(sus).length > 1 ? "them" : "it") + " out. Check the pack."));
+      }
       var why = whyProcessed(p);
       if (why) card.appendChild(why);
       var nt = nutritionTable(p);
@@ -871,13 +895,34 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
 
   /* Nutrient traffic lights, nutrition table, NOVA markers, labels */
   var LEVEL_NAMES = [["fat", "Fat"], ["saturated-fat", "Saturated fat"], ["sugars", "Sugars"], ["salt", "Salt"]];
+  /* Values that cannot be right for a food, per 100 g. Returns the nutrient keys to distrust, e.g. { salt: 1 }.
+     Volunteers type these in, so slips happen: a missing decimal point, per-serving numbers, or a field left at 0. */
+  function suspectNutrients(p) {
+    var n = p.nutriments || {}, bad = {}, any = false;
+    var v = function (k) { var x = n[k + "_100g"]; return typeof x === "number" && isFinite(x) ? x : null; };
+    var fat = v("fat"), sat = v("saturated-fat"), carb = v("carbohydrates"), sug = v("sugars"), pro = v("proteins"), salt = v("salt"), fib = v("fiber"), kcal = v("energy-kcal");
+    var flag = function (k) { bad[k] = 1; any = true; };
+    [["fat", fat], ["saturated-fat", sat], ["carbohydrates", carb], ["sugars", sug], ["proteins", pro], ["salt", salt], ["fiber", fib]].forEach(function (x) { if (x[1] !== null && (x[1] < 0 || x[1] > 100)) flag(x[0]); });
+    if (sat !== null && fat !== null && sat > fat + 1) flag("saturated-fat");
+    if (sug !== null && carb !== null && sug > carb + 1) flag("sugars");
+    if (fat !== null && carb !== null && pro !== null && fat + carb + pro > 105) { flag("fat"); flag("carbohydrates"); flag("proteins"); }
+    if (kcal !== null && (kcal < 0 || kcal > 905)) flag("energy-kcal");
+    if (kcal !== null && fat !== null && carb !== null && pro !== null && !bad.fat) {
+      var est = 9 * fat + 4 * carb + 4 * pro;
+      if (est > 60 && (kcal < est * 0.5 || kcal > est * 1.6 + 60)) flag("energy-kcal");
+    }
+    /* Salt at exactly 0 while the ingredient list names salt near the start */
+    var ing = String(p.ingredients_text || "").toLowerCase().split(/[,;(]/).slice(0, 8).join(",");
+    if (salt === 0 && /(^|[\s,])(sea )?salt\b/.test(ing)) flag("salt");
+    return any ? bad : null;
+  }
   function productLevels(p) {
-    var lv = p.nutrient_levels || {};
+    var lv = p.nutrient_levels || {}, sus = suspectNutrients(p) || {};
     var keys = LEVEL_NAMES.filter(function (k) { return lv[k[0]]; });
     if (!keys.length) return null;
     var row = el("div", "levels");
     row.setAttribute("aria-label", "Nutrient levels per 100 g");
-    keys.forEach(function (k) { row.appendChild(el("span", "lvl " + lv[k[0]], k[1] + ": " + lv[k[0]])); });
+    keys.forEach(function (k) { row.appendChild(sus[k[0]] ? el("span", "lvl", k[1] + ": check the pack") : el("span", "lvl " + lv[k[0]], k[1] + ": " + lv[k[0]])); });
     return row;
   }
   function whyProcessed(p) {
@@ -1823,7 +1868,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (prefs.sweeteners) { if (hit(SWEETENER_CODES)) bad.push("has artificial sweeteners"); else if (!knowsAdds) unsure.push("artificial sweeteners"); }
     if (prefs.highsugar) {
       var sg = p.nutriments && p.nutriments.sugars_100g, lvl = p.nutrient_levels && p.nutrient_levels.sugars;
-      if (lvl === "high" || typeof sg === "number" && sg > 22.5) bad.push("high in sugar"); else if (!lvl && typeof sg !== "number") unsure.push("sugar");
+      if ((suspectNutrients(p) || {}).sugars) unsure.push("sugar");
+      else if (lvl === "high" || typeof sg === "number" && sg > 22.5) bad.push("high in sugar"); else if (!lvl && typeof sg !== "number") unsure.push("sugar");
     }
     if (prefs.upf) { var ng = Number(p.nova_group); if (ng === 4) bad.push("ultra-processed"); else if (!(ng >= 1 && ng <= 3)) unsure.push("processing level"); }
     return { bad: bad, trace: trace, unsure: unsure };
@@ -2104,7 +2150,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     var org = tags.filter(function (t) { return ORGANIC_TAGS.indexOf(t) !== -1; });
     var thin = !org.length && isThin(p);
     var n = p.nutriments || {};
-    var num = function (k) { var v = n[k + "_100g"]; return typeof v === "number" && isFinite(v) && v >= 0 ? v : null; };
+    var sus = suspectNutrients(p) || {};
+    var num = function (k) { var v = n[k + "_100g"]; return !sus[k] && typeof v === "number" && isFinite(v) && v >= 0 ? v : null; };
     var ADD = window.ADDITIVES || {};
     var adds = (p.additives_tags || []).map(function (t) { return t.replace(/^en:/, "").toUpperCase(); });
     var grade = (p.nutriscore_grade || "").toLowerCase();
@@ -2118,7 +2165,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       grade: /^[a-e]$/.test(grade) ? grade : null,
       gradeNA: /not-applicable/.test(grade),
       sugar: num("sugars"), satfat: num("saturated-fat"), salt: num("salt"), protein: num("proteins"), fiber: num("fiber"), kcal: num("energy-kcal"),
-      alerts: alertInfo(p)
+      alerts: alertInfo(p), sus: sus
     };
   }
   /* "a", "b", "tie", or null when either side has no data. Small differences count as a tie. */
@@ -2144,6 +2191,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       rows.push({ label: label, va: va, vb: vb, win: win, weight: weight, why: why });
     }
     var nd = function (t) { return [t || "No data", "", "dim", true]; };
+    /* A figure we distrust shows as "Check the pack" and never decides a row */
+    var ndk = function (x, k) { return x.sus[k] ? ["Check the pack", "Database figure looks wrong", "dim", true] : nd(); };
 
     if (A.alerts) {
       var aw = function (x) {
@@ -2173,17 +2222,17 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     addRow("Nutri-Score", function (x) { return x.grade ? [x.grade.toUpperCase()] : nd(x.gradeNA ? "Doesn't apply" : "Not rated"); },
       A.grade && B.grade ? (A.grade === B.grade ? "tie" : A.grade < B.grade ? "a" : "b") : null, 1,
       function (w) { return "better Nutri-Score (" + F[w].grade.toUpperCase() + " vs " + F[other(w)].grade.toUpperCase() + ")"; });
-    addRow("Sugar per 100 g", function (x) { return x.sugar === null ? nd() : [fmtTsp(x.sugar), fmtG(x.sugar)]; },
+    addRow("Sugar per 100 g", function (x) { return x.sugar === null ? ndk(x, "sugars") : [fmtTsp(x.sugar), fmtG(x.sugar)]; },
       better(A.sugar, B.sugar, false, 1), 1, function (w) { var d = (F[other(w)].sugar - F[w].sugar) / 4; return d >= 1 ? Math.round(d) + " tsp less sugar" : "less sugar"; });
-    addRow("Saturated fat per 100 g", function (x) { return x.satfat === null ? nd() : [fmtG(x.satfat)]; },
+    addRow("Saturated fat per 100 g", function (x) { return x.satfat === null ? ndk(x, "saturated-fat") : [fmtG(x.satfat)]; },
       better(A.satfat, B.satfat, false, 0.5), 1, function () { return "less saturated fat"; });
-    addRow("Salt per 100 g", function (x) { return x.salt === null ? nd() : [fmtG(x.salt)]; },
+    addRow("Salt per 100 g", function (x) { return x.salt === null ? ndk(x, "salt") : [fmtG(x.salt)]; },
       better(A.salt, B.salt, false, 0.1), 1, function () { return "less salt"; });
-    addRow("Protein per 100 g", function (x) { return x.protein === null ? nd() : [fmtG(x.protein)]; },
+    addRow("Protein per 100 g", function (x) { return x.protein === null ? ndk(x, "proteins") : [fmtG(x.protein)]; },
       better(A.protein, B.protein, true, 1), 1, function () { return "more protein"; });
-    addRow("Fiber per 100 g", function (x) { return x.fiber === null ? nd() : [fmtG(x.fiber)]; },
+    addRow("Fiber per 100 g", function (x) { return x.fiber === null ? ndk(x, "fiber") : [fmtG(x.fiber)]; },
       better(A.fiber, B.fiber, true, 0.5), 1, function () { return "more fiber"; });
-    addRow("Calories per 100 g", function (x) { return x.kcal === null ? nd() : [Math.round(x.kcal) + " kcal"]; }, "info", 0, null);
+    addRow("Calories per 100 g", function (x) { return x.kcal === null ? ndk(x, "energy-kcal") : [Math.round(x.kcal) + " kcal"]; }, "info", 0, null);
 
     /* Verdict */
     var score = { a: 0, b: 0 }, why = { a: [], b: [] }, judged = 0;
