@@ -999,7 +999,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   }
   function fdcToProduct(f, code) {
     var n = {}, by = {};
-    (f.foodNutrients || []).forEach(function (x) { if (typeof x.value === "number") by[x.nutrientId] = x.value; });
+    /* USDA sometimes lists a nutrient twice (as sold, then as prepared); the first entry is the product as sold */
+    (f.foodNutrients || []).forEach(function (x) { if (typeof x.value === "number" && by[x.nutrientId] === undefined) by[x.nutrientId] = x.value; });
     var set = function (k, id, mult) { if (typeof by[id] === "number") n[k + "_100g"] = Math.round(by[id] * (mult || 1) * 100) / 100; };
     set("energy-kcal", 1008); set("fat", 1004); set("saturated-fat", 1258); set("carbohydrates", 1005); set("sugars", 2000); set("fiber", 1079); set("proteins", 1003); set("salt", 1093, 2.5 / 1000);
     var lv = {}, level = function (k, key, lo, hi) { var v = n[key + "_100g"]; if (typeof v === "number") lv[k] = v <= lo ? "low" : v > hi ? "high" : "moderate"; };

@@ -1,5 +1,5 @@
 /* Organic Check offline support: app shell from cache, product lookups fall back to the last copy seen. */
-const VERSION = "oc-v8";
+const VERSION = "oc-v9";
 const SHELL = ["/", "/barcode-detector.js", "/plu-data.js", "/additives-data.js", "/manifest.webmanifest", "/icon-192.png"];
 
 self.addEventListener("install", (e) => {
