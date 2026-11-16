@@ -1,5 +1,5 @@
 /* Organic Check offline support: app shell from cache, product lookups fall back to the last copy seen. */
-const VERSION = "oc-v10";
+const VERSION = "oc-v11";
 const SHELL = ["/", "/barcode-detector.js", "/plu-data.js", "/additives-data.js", "/manifest.webmanifest", "/icon-192.png"];
 
 self.addEventListener("install", (e) => {
@@ -31,7 +31,12 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin === location.origin) {
     if (url.pathname.startsWith("/api/")) return;
-    if (req.mode === "navigate") { e.respondWith(networkFirst(new Request("/", { credentials: "same-origin" }))); return; }
+    if (req.mode === "navigate") {
+      /* Other pages (terms.html) load as themselves; everything else is the app shell */
+      if (url.pathname.endsWith(".html") && url.pathname !== "/index.html") { e.respondWith(networkFirst(req)); return; }
+      e.respondWith(networkFirst(new Request("/", { credentials: "same-origin" })));
+      return;
+    }
     e.respondWith(staleWhileRevalidate(req));
     return;
   }

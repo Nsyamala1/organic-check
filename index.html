@@ -137,6 +137,9 @@ button.alt { padding: 10px 16px; border-radius: 999px; font: 600 0.92rem var(--f
 .fixit { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1.5px dashed var(--line); border-radius: 14px; font-size: 0.9rem; color: var(--muted); }
 .fixit strong { font: 700 1rem var(--font-display); color: var(--ink); }
 .fixit a { align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; font-weight: 600; color: var(--leaf); }
+.site-foot { margin: 8px 0 0; padding: 16px 4px 4px; border-top: 1px solid var(--line); font-size: 0.82rem; line-height: 1.5; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+.site-foot p { margin: 0; }
+.site-foot a, .report a { color: var(--leaf); font-weight: 600; display: inline-block; padding: 6px 0; }
 .glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .glance li { padding: 6px 12px; border-radius: 999px; font: 600 0.88rem/1.25 var(--font-body); background: var(--bg); color: var(--muted); border: 1px solid transparent; }
 .glance li.good { background: var(--good-bg); color: var(--good); }
@@ -466,7 +469,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     <div id="out" aria-live="polite"></div>
     <details class="card" id="prefs"><summary><span>My profile</span><span class="count" id="prefs-count">Off</span></summary>
       <div class="prefs-body">
-        <p class="note">Pick what you avoid. Every scan and comparison then tells you whether a product fits you. Your choices stay on this phone.</p>
+        <p class="note">Pick what you avoid. Every scan and comparison then tells you when the database lists a match. It is not a safety check: if you have an allergy, always read the pack. Your choices stay on this phone.</p>
         <h3>Diet</h3>
         <div class="toggles" id="prefs-diet"></div>
         <h3>Allergens</h3>
@@ -643,13 +646,17 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     <dialog id="order-dlg" aria-labelledby="order-title"><div class="dlg"><div class="dlg-head"><h2 id="order-title">My order</h2><button type="button" class="textbtn" id="order-close">Close</button></div><div id="order-body"></div></div></dialog>
     <p class="note">Photos show the classic version of each dish, not this restaurant's plate. Calories are rough ranges for a typical serving. Allergens are guesses from the dish name, so always ask the staff if you have an allergy.</p>
   </section>
+    <footer class="site-foot">
+      <p>Organic Check shows what public databases record. It is information, not medical, dietary or legal advice, and the data can be wrong or out of date. Always read the pack, above all if you have an allergy.</p>
+      <p><a href="terms.html">Terms, data sources and privacy</a> · <a href="https://github.com/Nsyamala1/organic-check/issues/new?title=Wrong%20information&amp;body=Which%20product%20or%20company%2C%20what%20is%20wrong%2C%20and%20what%20should%20it%20say%3F%0A%0A" target="_blank" rel="noopener noreferrer">Report an error</a></p>
+    </footer>
   </main>
 </div>
 
 <dialog id="welcome" aria-labelledby="welcome-title">
   <form method="dialog" class="welcome-body">
     <h2 id="welcome-title">Make it yours</h2>
-    <p class="note">Tell us what you avoid and every scan will say whether a product fits you. Pick any, or none. Your choices stay on this phone and you can change them later in My profile.</p>
+    <p class="note">Tell us what you avoid and every scan will warn you when the database lists a match. Pick any, or none. It is not a safety check: if you have an allergy, always read the pack. Your choices stay on this phone and you can change them later in My profile.</p>
     <h3>Allergies</h3>
     <div class="toggles" id="ob-allergens"></div>
     <h3>Diet</h3>
@@ -733,6 +740,13 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
   tabFromHash();
 
   /* Packaged food */
+  /* Error reports open a prefilled issue on the project's public tracker */
+  function reportLink(subject, label) {
+    var a = el("a", "", label || "Report an error");
+    a.href = "https://github.com/Nsyamala1/organic-check/issues/new?title=" + encodeURIComponent(subject.slice(0, 120)) + "&body=" + encodeURIComponent("What is wrong, and what should it say?\n\n");
+    a.target = "_blank"; a.rel = "noopener noreferrer";
+    return a;
+  }
   function showMessage(text, isErr) {
     var out = $("out");
     out.textContent = "";
@@ -802,7 +816,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (ai) {
       ai.bad.forEach(function (t) { chip(t.charAt(0).toUpperCase() + t.slice(1), "bad"); });
       if (ai.trace.length) chip("May contain " + ai.trace.join(", "), "mid");
-      if (!ai.bad.length && !ai.trace.length) chip(ai.unsure.length ? "Fits you as far as we can tell" : "Fits your profile", ai.unsure.length ? "" : "good");
+      if (!ai.bad.length && !ai.trace.length) chip(ai.unsure.length ? "Nothing you avoid is listed, some data missing" : "Nothing you avoid is listed", ai.unsure.length ? "" : "good");
     }
     if (isAlc) card.appendChild(el("p", "note", ALC_SHORT));
     var missing = [];
@@ -890,6 +904,10 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     out.appendChild(card);
     reveal(card);
     saveHistory(p, organic.length > 0);
+    var rep = el("p", "note report");
+    rep.appendChild(document.createTextNode("Something wrong on this page? "));
+    rep.appendChild(reportLink("Wrong info for product " + (p.code || "") + (pName(p) ? " (" + pName(p) + ")" : "")));
+    card.appendChild(rep);
     if (!isAlc) loadAlternatives(p, card, organic.length > 0);
   }
 
@@ -1431,7 +1449,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       card.appendChild(el("p", "note", "That does not mean a product is not organic. The brand may be certified under a parent company or a contract manufacturer. Try the \"Distributed by\" name or the certifier printed on the package."));
     } else {
       card.appendChild(el("h2", "", r.total === 1 ? "1 possible match" : r.total.toLocaleString() + " possible matches"));
-      card.appendChild(el("p", "note", "Check the name and location to decide whether an entry is the company you mean."));
+      card.appendChild(el("p", "note", "Check the name and location to decide whether an entry is the company you mean. These are name matches in USDA's list, not a statement by us about any company or product."));
       var list = el("div", "oplist");
       r.ops.forEach(function (o) {
         var row = el("div", "op");
@@ -1487,8 +1505,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     if (organic) {
       box.appendChild(el("strong", "", group === "high" ? "Dirty Dozen item, bought organic" : "Clean Fifteen item, bought organic"));
       box.appendChild(el("span", "", group === "high"
-        ? "Conventional versions of this item carry some of the highest pesticide residues in EWG's tests. Choosing organic is the right call."
-        : "Conventional versions of this item test low for pesticide residue, so organic matters less here."));
+        ? "Conventional versions of this item carry some of the highest pesticide residues in EWG's tests, so this is an item where organic makes more difference."
+        : "Conventional versions of this item test low for pesticide residue in EWG's tests, so organic makes less difference here."));
     } else if (group === "high") {
       box.appendChild(el("strong", "", "Dirty Dozen: worth buying organic"));
       box.appendChild(el("span", "", "EWG's tests found some of the highest pesticide residues on conventional versions of this item."));
@@ -1893,8 +1911,8 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     }
     if (!bad.length && !trace.length) {
       var ok = el("div", "flag low");
-      ok.appendChild(el("strong", "", "Fits your profile"));
-      ok.appendChild(el("span", "", unsure.length ? "Open Food Facts has no data on " + unsure.join(", ") + ", so check the label." : "Based on the ingredients and allergens recorded. Always check the label."));
+      ok.appendChild(el("strong", "", "Nothing you avoid is listed"));
+      ok.appendChild(el("span", "", (unsure.length ? "The database has no data on " + unsure.join(", ") + ". " : "") + "This is what the database records, and it can be wrong or out of date. If you have an allergy, always read the pack."));
       box.appendChild(ok);
     } else if (unsure.length) {
       box.appendChild(el("p", "note", "No data on " + unsure.join(", ") + "."));
@@ -2198,7 +2216,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
       var aw = function (x) {
         if (x.alerts.bad.length) return [cap(x.alerts.bad.join(", ")), "", "bad"];
         if (x.alerts.trace.length) return ["May contain " + x.alerts.trace.join(", "), "", "mid"];
-        return ["Nothing flagged", x.alerts.unsure.length ? "No data on " + x.alerts.unsure.join(", ") : ""];
+        return ["Nothing listed", x.alerts.unsure.length ? "No data on " + x.alerts.unsure.join(", ") : "Check the pack"];
       };
       var ab = A.alerts.bad.length > 0, bb = B.alerts.bad.length > 0, at = A.alerts.trace.length > 0, bt = B.alerts.trace.length > 0;
       var awin = ab !== bb ? (ab ? "b" : "a") : !ab && at !== bt ? (at ? "b" : "a") : "tie";
@@ -2459,7 +2477,7 @@ button.addorder[aria-pressed="true"] { background: var(--leaf); color: var(--lea
     }).then(function () {
         if (!picked.length) { status.textContent = organicOnly ? "No organic alternatives found in this category yet." : nova && nova < 4 ? "No clearly better pick of this kind found. This one is already less processed than most." : "No better picks found in this category yet."; return; }
         status.remove();
-        if (!organicOnly && prefsOn().length) wrap.appendChild(el("p", "note", "Picks that don't fit your profile are left out."));
+        if (!organicOnly && prefsOn().length) wrap.appendChild(el("p", "note", "Picks with a recorded match to your profile are left out. Check each pack if you have an allergy."));
         if (abroad) wrap.appendChild(el("p", "note", "None recorded for your country, so these may be sold elsewhere."));
         picked.forEach(function (x) {
           var b = el("button", "alt");

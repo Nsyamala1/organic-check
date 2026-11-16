@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terms and data sources · Organic Check</title>
+<meta name="description" content="What Organic Check is, where its data comes from, what it cannot tell you, and what it stores.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #f2efe8; --surface: #ffffff; --ink: #14241a; --muted: #55635a; --line: #dedbd0; --leaf: #1f6b3a; --mid: #7a5200; --mid-bg: #fbefcf; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0f1812; --surface: #17241b; --ink: #e8efe9; --muted: #9fb3a5; --line: #2a3b2f; --leaf: #6fcf8d; --mid: #e8c36a; --mid-bg: #3a3012; color-scheme: dark; } }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 680px; margin: 0 auto; padding: 24px 16px calc(48px + env(safe-area-inset-bottom)); }
+a { color: var(--leaf); font-weight: 600; }
+.back { display: inline-flex; align-items: center; min-height: 44px; }
+h1 { font: 800 2rem/1.1 "Bricolage Grotesque", "Avenir Next", sans-serif; margin: 8px 0 4px; text-wrap: balance; }
+h2 { font: 800 1.25rem/1.2 "Bricolage Grotesque", "Avenir Next", sans-serif; margin: 32px 0 8px; }
+p, li { margin: 0 0 10px; overflow-wrap: anywhere; }
+ul { padding-left: 20px; margin: 0 0 10px; }
+.updated { color: var(--muted); font-size: 0.9rem; }
+.key { background: var(--mid-bg); color: var(--mid); border-radius: 16px; padding: 14px 16px; margin: 20px 0 0; }
+.key p:last-child { margin-bottom: 0; }
+.key strong { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">&larr; Back to Organic Check</a>
+  <h1>Terms, data sources and privacy</h1>
+  <p class="updated">Last updated November 15, 2026</p>
+
+  <div class="key">
+    <p><strong>The short version.</strong> Organic Check shows you what public food databases record about a product. Those databases can be wrong, incomplete or out of date. Nothing here is medical, dietary or legal advice. Always read the pack, above all if you have an allergy.</p>
+  </div>
+
+  <h2>What this app is</h2>
+  <p>Organic Check is a free tool for looking up food products. It reads a barcode or a produce sticker code and shows information that public sources hold about it: ingredients, additives, how processed the food is, nutrition figures and organic labels. It does not test food, inspect companies or certify anything.</p>
+
+  <h2>Where the data comes from</h2>
+  <ul>
+    <li><strong>Open Food Facts</strong> supplies packaged-food data. Volunteers type it in from packaging, so entries can be missing, mistaken or old. The data is available under the Open Database License.</li>
+    <li><strong>USDA FoodData Central</strong> fills in names, ingredients and nutrition for some US products. It does not record organic labels.</li>
+    <li><strong>USDA Organic INTEGRITY Database</strong> supplies the list of certified organic operations. The app holds a dated copy, shown on the USDA list tab. The live database on USDA's site is the authority.</li>
+    <li><strong>Produce sticker codes</strong> follow the international PLU numbering scheme. The pesticide notes draw on the Environmental Working Group's published produce lists.</li>
+    <li><strong>Additive notes</strong> summarise published opinions of the European Food Safety Authority. They describe what a regulator found, not a judgement by us about a product.</li>
+  </ul>
+
+  <h2>What the app cannot tell you</h2>
+  <ul>
+    <li><strong>Allergens.</strong> "Nothing you avoid is listed" means only that the database lists no match. Recipes change and records are incomplete. If you have an allergy or intolerance, the pack and the manufacturer are the only reliable sources.</li>
+    <li><strong>Organic status.</strong> A missing organic label can mean nobody entered it. A company that does not appear in the USDA list may be certified under another name, a parent company or a contract manufacturer. A search result is not a statement by us that any product or company is or is not organic.</li>
+    <li><strong>Health.</strong> Scores such as Nutri-Score and NOVA are general classifications. They do not account for your health, your diet or how much you eat. Speak to a doctor or dietitian about medical or dietary decisions.</li>
+    <li><strong>Better picks and comparisons.</strong> These rank products on the recorded data only. They are suggestions to check, not recommendations to buy.</li>
+  </ul>
+
+  <h2>Your use of the app</h2>
+  <p>The app is provided as it is, free of charge, with no guarantee that the information is accurate, complete or current. You are responsible for decisions you make with it. To the extent the law allows, the people who run Organic Check are not liable for loss or harm that results from relying on it.</p>
+  <p>Product names, brands and logos belong to their owners. Showing a product does not mean its maker endorses this app, or that we endorse the product.</p>
+
+  <h2>If something is wrong</h2>
+  <p>If the app shows wrong information about a product or a company, please <a href="https://github.com/Nsyamala1/organic-check/issues/new?title=Wrong%20information&amp;body=Which%20product%20or%20company%2C%20what%20is%20wrong%2C%20and%20what%20should%20it%20say%3F%0A%0A" target="_blank" rel="noopener noreferrer">report it</a> and we will look at it promptly. Product data can also be corrected at the source on <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener noreferrer">Open Food Facts</a>, which fixes it for everyone.</p>
+
+  <h2>Privacy</h2>
+  <ul>
+    <li><strong>No account.</strong> The app has no sign-up and does not ask for your name or email.</li>
+    <li><strong>Kept on your device.</strong> Your profile choices, recent scans, last comparison and country are saved in your browser on your device. They are not sent to us. Clearing your browser data removes them.</li>
+    <li><strong>What leaves your device.</strong> The barcode or search words you look up are sent to Open Food Facts, and for some US products to USDA through our server, to fetch the product. Our hosting provider keeps standard server logs such as IP address and time.</li>
+    <li><strong>Camera.</strong> Barcode scanning reads the camera picture on your device. The picture is not uploaded.</li>
+    <li><strong>Menu reader.</strong> If you use the menu reader, the menu photo is sent to an AI service to be read, together with your profile choices so dishes can be checked against them.</li>
+    <li><strong>Shared links.</strong> A comparison link contains the two barcodes and nothing about you.</li>
+    <li><strong>No ads, no trackers.</strong> The app shows no advertising and earns nothing from the shop links it offers.</li>
+  </ul>
+
+  <h2>Changes</h2>
+  <p>These terms may change as the app changes. The date at the top shows the latest version.</p>
+</main>
+</body>
+</html>
